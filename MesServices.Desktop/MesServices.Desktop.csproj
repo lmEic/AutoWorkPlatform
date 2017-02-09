@@ -1,0 +1,335 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{EEFA697A-0D89-4008-8AEC-49A83EEE1AFB}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MesServices.Desktop</RootNamespace>
+    <AssemblyName>MesServices.Desktop</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DALFactory">
+      <HintPath>..\Libs\DALFactory.dll</HintPath>
+    </Reference>
+    <Reference Include="DayRepoet">
+      <HintPath>..\Libs\DayRepoet.dll</HintPath>
+    </Reference>
+    <Reference Include="GalaSoft.MvvmLight">
+      <HintPath>..\Libs\GalaSoft.MvvmLight.dll</HintPath>
+    </Reference>
+    <Reference Include="GalaSoft.MvvmLight.Extras">
+      <HintPath>..\Libs\GalaSoft.MvvmLight.Extras.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\Libs\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Business">
+      <HintPath>..\Libs\MES.Business.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Common">
+      <HintPath>..\Libs\MES.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Resource.Colour">
+      <HintPath>..\Libs\MES.Resource.Colour.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Resource.Image">
+      <HintPath>..\Libs\MES.Resource.Image.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Resource.Style">
+      <HintPath>..\Libs\MES.Resource.Style.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.BLL.BPM">
+      <HintPath>..\Libs\MES.Server.BLL.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.BLL.PPM">
+      <HintPath>..\Libs\MES.Server.BLL.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.Bll.SYS">
+      <HintPath>..\Libs\MES.Server.Bll.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.DBUtility">
+      <HintPath>..\Libs\MES.Server.DBUtility.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.BPM">
+      <HintPath>..\Libs\MES.Server.IDAL.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.HR">
+      <HintPath>..\Libs\MES.Server.IDAL.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.PPM">
+      <HintPath>..\Libs\MES.Server.IDAL.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.SYS">
+      <HintPath>..\Libs\MES.Server.IDAL.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.Model.SYS">
+      <HintPath>..\Libs\MES.Server.Model.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.SQLDAL.SYS">
+      <HintPath>..\Libs\MES.Server.SQLDAL.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.BLL.HR">
+      <HintPath>..\Libs\MES.Sever.BLL.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.Model.BPM">
+      <HintPath>..\Libs\MES.Sever.Model.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.Model.HR">
+      <HintPath>..\Libs\MES.Sever.Model.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.Model.PPM">
+      <HintPath>..\Libs\MES.Sever.Model.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.SQLDAL.BPM">
+      <HintPath>..\Libs\MES.Sever.SQLDAL.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.SQLDAL.HR">
+      <HintPath>..\Libs\MES.Sever.SQLDAL.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.SQLDAL.PPM">
+      <HintPath>..\Libs\MES.Sever.SQLDAL.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Prism">
+      <HintPath>..\Libs\Microsoft.Practices.Prism.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation">
+      <HintPath>..\Libs\Microsoft.Practices.ServiceLocation.dll</HintPath>
+    </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>..\Libs\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI">
+      <HintPath>..\Libs\NPOI.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OOXML">
+      <HintPath>..\Libs\NPOI.OOXML.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXml4Net">
+      <HintPath>..\Libs\NPOI.OpenXml4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXmlFormats">
+      <HintPath>..\Libs\NPOI.OpenXmlFormats.dll</HintPath>
+    </Reference>
+    <Reference Include="Oracle.ManagedDataAccess">
+      <HintPath>..\Libs\Oracle.ManagedDataAccess.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\Libs\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Input.Toolkit">
+      <HintPath>..\Libs\System.Windows.Controls.Input.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Layout.Toolkit">
+      <HintPath>..\Libs\System.Windows.Controls.Layout.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Interactivity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\System.Windows.Interactivity.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls">
+      <HintPath>..\Libs\Telerik.Windows.Controls.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls.Diagrams.Extensions">
+      <HintPath>..\Libs\Telerik.Windows.Controls.Diagrams.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WPF.DazzleUI2">
+      <HintPath>..\Libs\WPF.DazzleUI2.dll</HintPath>
+    </Reference>
+    <Reference Include="WPFToolkit">
+      <HintPath>..\Libs\WPFToolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Aero">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.Themes.Aero.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2010">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.Themes.VS2010.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.DataGrid">
+      <HintPath>..\Libs\Xceed.Wpf.DataGrid.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.Toolkit">
+      <HintPath>..\Libs\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="ZhuifengLib">
+      <HintPath>..\Libs\ZhuifengLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Compile Include="ViewModel\TotalControlsViewModel.cs" />
+    <Compile Include="ViewModel\ErpSynchronousViewModel.cs" />
+    <Compile Include="View\TotalControls.xaml.cs">
+      <DependentUpon>TotalControls.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\DataUpload.xaml.cs">
+      <DependentUpon>DataUpload.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\OnLine.xaml.cs">
+      <DependentUpon>OnLine.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Setting.xaml.cs">
+      <DependentUpon>Setting.xaml</DependentUpon>
+    </Compile>
+    <Page Include="View\TotalControls.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\DataUpload.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Page Include="View\OnLine.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ErpSynchronous.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\Setting.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="View\ErpSynchronous.xaml.cs">
+      <DependentUpon>ErpSynchronous.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Button\mie.png" />
+    <Resource Include="Skin\Button\mim.png" />
+    <Resource Include="Skin\Button\min.png" />
+    <Resource Include="Skin\Button\mme.png" />
+    <Resource Include="Skin\Button\mmm.png" />
+    <Resource Include="Skin\Button\mmn.png" />
+    <Resource Include="Skin\Button\mse.png" />
+    <Resource Include="Skin\Button\msm.png" />
+    <Resource Include="Skin\Button\msn.png" />
+    <Resource Include="Skin\Button\mxe.png" />
+    <Resource Include="Skin\Button\mxm.png" />
+    <Resource Include="Skin\Button\mxn.png" />
+    <Resource Include="Skin\Button\ske.png" />
+    <Resource Include="Skin\Button\skm.png" />
+    <Resource Include="Skin\Button\skn.png" />
+    <Resource Include="Skin\Button\xe.png" />
+    <Resource Include="Skin\Button\xm.png" />
+    <Resource Include="Skin\Button\xn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Bd\enter.png" />
+    <Resource Include="Skin\Bd\mover.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Icon\OrderSynchronization.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Icon\Setting.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Icon\Monitor.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Icon\DataUpload.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Business\Business.csproj">
+      <Project>{71994db2-5ddd-48e0-9019-97c9f2df3b79}</Project>
+      <Name>Business</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Skin\Icon\TotalControls.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

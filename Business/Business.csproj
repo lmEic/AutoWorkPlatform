@@ -1,0 +1,212 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{71994DB2-5DDD-48E0-9019-97C9F2DF3B79}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Business</RootNamespace>
+    <AssemblyName>Business</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DALFactory">
+      <HintPath>..\Libs\DALFactory.dll</HintPath>
+    </Reference>
+    <Reference Include="DayRepoet">
+      <HintPath>..\Libs\DayRepoet.dll</HintPath>
+    </Reference>
+    <Reference Include="GalaSoft.MvvmLight">
+      <HintPath>..\Libs\GalaSoft.MvvmLight.dll</HintPath>
+    </Reference>
+    <Reference Include="GalaSoft.MvvmLight.Extras">
+      <HintPath>..\Libs\GalaSoft.MvvmLight.Extras.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Business">
+      <HintPath>..\Libs\MES.Business.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Common">
+      <HintPath>..\Libs\MES.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Resource.Colour">
+      <HintPath>..\Libs\MES.Resource.Colour.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Resource.Image">
+      <HintPath>..\Libs\MES.Resource.Image.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Resource.Style">
+      <HintPath>..\Libs\MES.Resource.Style.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.BLL.BPM">
+      <HintPath>..\Libs\MES.Server.BLL.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.BLL.PPM">
+      <HintPath>..\Libs\MES.Server.BLL.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.Bll.SYS">
+      <HintPath>..\Libs\MES.Server.Bll.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.DBUtility">
+      <HintPath>..\Libs\MES.Server.DBUtility.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.BPM">
+      <HintPath>..\Libs\MES.Server.IDAL.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.HR">
+      <HintPath>..\Libs\MES.Server.IDAL.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.PPM">
+      <HintPath>..\Libs\MES.Server.IDAL.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.IDAL.SYS">
+      <HintPath>..\Libs\MES.Server.IDAL.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.Model.SYS">
+      <HintPath>..\Libs\MES.Server.Model.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Server.SQLDAL.SYS">
+      <HintPath>..\Libs\MES.Server.SQLDAL.SYS.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.BLL.HR">
+      <HintPath>..\Libs\MES.Sever.BLL.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.Model.BPM">
+      <HintPath>..\Libs\MES.Sever.Model.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.Model.HR">
+      <HintPath>..\Libs\MES.Sever.Model.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.Model.PPM">
+      <HintPath>..\Libs\MES.Sever.Model.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.SQLDAL.BPM">
+      <HintPath>..\Libs\MES.Sever.SQLDAL.BPM.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.SQLDAL.HR">
+      <HintPath>..\Libs\MES.Sever.SQLDAL.HR.dll</HintPath>
+    </Reference>
+    <Reference Include="MES.Sever.SQLDAL.PPM">
+      <HintPath>..\Libs\MES.Sever.SQLDAL.PPM.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Prism">
+      <HintPath>..\Libs\Microsoft.Practices.Prism.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\Microsoft.Practices.ServiceLocation.dll</HintPath>
+    </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>..\Libs\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI, Version=2.1.3.1, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\NPOI.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OOXML, Version=2.1.3.1, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\NPOI.OOXML.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXml4Net, Version=2.1.3.1, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\NPOI.OpenXml4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXmlFormats, Version=2.1.3.1, Culture=neutral, PublicKeyToken=0df73ec7942b34e1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\NPOI.OpenXmlFormats.dll</HintPath>
+    </Reference>
+    <Reference Include="Oracle.ManagedDataAccess">
+      <HintPath>..\Libs\Oracle.ManagedDataAccess.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\Libs\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Input.Toolkit">
+      <HintPath>..\Libs\System.Windows.Controls.Input.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Layout.Toolkit">
+      <HintPath>..\Libs\System.Windows.Controls.Layout.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Interactivity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Libs\System.Windows.Interactivity.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Telerik.Windows.Controls">
+      <HintPath>..\Libs\Telerik.Windows.Controls.dll</HintPath>
+    </Reference>
+    <Reference Include="Telerik.Windows.Controls.Diagrams.Extensions">
+      <HintPath>..\Libs\Telerik.Windows.Controls.Diagrams.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="WPF.DazzleUI2">
+      <HintPath>..\Libs\WPF.DazzleUI2.dll</HintPath>
+    </Reference>
+    <Reference Include="WPFToolkit">
+      <HintPath>..\Libs\WPFToolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Aero">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.Themes.Aero.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.Metro">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.Themes.Metro.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2010">
+      <HintPath>..\Libs\Xceed.Wpf.AvalonDock.Themes.VS2010.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.DataGrid">
+      <HintPath>..\Libs\Xceed.Wpf.DataGrid.dll</HintPath>
+    </Reference>
+    <Reference Include="Xceed.Wpf.Toolkit">
+      <HintPath>..\Libs\Xceed.Wpf.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="ZhuifengLib">
+      <HintPath>..\Libs\ZhuifengLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Sunchronous\OrderSynchronous.cs" />
+    <Compile Include="Sunchronous\TaskTimerBase.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

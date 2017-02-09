@@ -1,0 +1,131 @@
+﻿<dui:DazzleWindow
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dui="clr-namespace:WPF.DazzleUI2.Controls;assembly=WPF.DazzleUI2"
+        xmlns:local="clr-namespace:MesServices.Desktop" x:Class="MesServices.Desktop.MainWindow"
+        Title="MainWindow" Background="#FF99B4D1" >
+
+    <Grid Background="#FF386FB2">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <Label Content="数据自动化处理平台(V1.0.2)" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="White" FontSize="20"/>
+
+        <dui:DazzleButton HorizontalAlignment="Right" VerticalAlignment="Top" Width="27" Height="22" Margin="0,0,5,0" Click="DazzleButton_Click">
+            <dui:DazzleButton.MyMoverBrush>
+                <ImageBrush ImageSource="Skin/Button/xm.png"/>
+            </dui:DazzleButton.MyMoverBrush>
+            <dui:DazzleButton.MyEnterBrush>
+                <ImageBrush ImageSource="Skin/Button/xe.png"/>
+            </dui:DazzleButton.MyEnterBrush>
+            <dui:DazzleButton.Background>
+                <ImageBrush ImageSource="Skin/Button/xn.png"/>
+            </dui:DazzleButton.Background>
+        </dui:DazzleButton>
+        <dui:DazzleButton HorizontalAlignment="Right" VerticalAlignment="Top" Width="27" Height="22" Margin="0,0,33,0" Click="DazzleButton_Click_1">
+            <dui:DazzleButton.MyMoverBrush>
+                <ImageBrush ImageSource="Skin/Button/mxe.png"/>
+            </dui:DazzleButton.MyMoverBrush>
+            <dui:DazzleButton.MyEnterBrush>
+                <ImageBrush ImageSource="Skin/Button/mxe.png"/>
+            </dui:DazzleButton.MyEnterBrush>
+            <dui:DazzleButton.Background>
+                <ImageBrush ImageSource="Skin/Button/mxn.png"/>
+            </dui:DazzleButton.Background>
+        </dui:DazzleButton>
+        <dui:DazzleButton HorizontalAlignment="Right" VerticalAlignment="Top" Width="27" Height="22" Margin="0,0,61,0" Click="DazzleButton_Click_2">
+            <dui:DazzleButton.MyMoverBrush>
+                <ImageBrush ImageSource="Skin/Button/mim.png"/>
+            </dui:DazzleButton.MyMoverBrush>
+            <dui:DazzleButton.MyEnterBrush>
+                <ImageBrush ImageSource="Skin/Button/mie.png"/>
+            </dui:DazzleButton.MyEnterBrush>
+            <dui:DazzleButton.Background>
+                <ImageBrush ImageSource="Skin/Button/min.png"/>
+            </dui:DazzleButton.Background>
+        </dui:DazzleButton>
+
+
+        <dui:DazzleTabControl Grid.Row="1" BorderBrush="{x:Null}" BorderThickness="0" Background="#FF386FB2">
+
+            <!--总控面板-->
+            <dui:DazzleTabItem Width="80" Height="75" Foreground="White" Header="主控面板">
+                <dui:DazzleTabItem.Background>
+                    <ImageBrush ImageSource="Skin/Icon/TotalControls.png"/>
+                </dui:DazzleTabItem.Background>
+                <dui:DazzleTabItem.MyMoverBrush>
+                    <ImageBrush ImageSource="Skin/Bd/mover.png"/>
+                </dui:DazzleTabItem.MyMoverBrush>
+                <dui:DazzleTabItem.MyEnterBrush>
+                    <ImageBrush ImageSource="Skin/Bd/enter.png"/>
+                </dui:DazzleTabItem.MyEnterBrush>
+                <local:TotalControls Width="Auto" Height="Auto"/>
+            </dui:DazzleTabItem>
+
+
+            <!--在线监控-->
+            <dui:DazzleTabItem Width="80" Height="75" Foreground="White" Header="考勤处理">
+                <dui:DazzleTabItem.Background>
+                    <ImageBrush ImageSource="Skin/Icon/Monitor.png"/>
+                </dui:DazzleTabItem.Background>
+                <dui:DazzleTabItem.MyMoverBrush>
+                    <ImageBrush ImageSource="Skin/Bd/mover.png"/>
+                </dui:DazzleTabItem.MyMoverBrush>
+                <dui:DazzleTabItem.MyEnterBrush>
+                    <ImageBrush ImageSource="Skin/Bd/enter.png"/>
+                </dui:DazzleTabItem.MyEnterBrush>
+                <local:OnLine Width="Auto" Height="Auto"/>
+            </dui:DazzleTabItem>
+
+            <!--数据上传-->
+            <dui:DazzleTabItem Width="80" Height="75" Foreground="White" Header="数据上传">
+                <dui:DazzleTabItem.Background>
+                    <ImageBrush ImageSource="Skin/Icon/DataUpload.png"/>
+                </dui:DazzleTabItem.Background>
+                <dui:DazzleTabItem.MyMoverBrush>
+                    <ImageBrush ImageSource="Skin/Bd/mover.png"/>
+                </dui:DazzleTabItem.MyMoverBrush>
+                <dui:DazzleTabItem.MyEnterBrush>
+                    <ImageBrush ImageSource="Skin/Bd/enter.png"/>
+                </dui:DazzleTabItem.MyEnterBrush>
+                <local:DataUpload Width="Auto" Height="Auto"/>
+            </dui:DazzleTabItem>
+
+            <!--ERP同步-->
+            <dui:DazzleTabItem Width="80" Height="75" Foreground="White" Header="ERP同步">
+                <dui:DazzleTabItem.Background>
+                    <ImageBrush ImageSource="Skin/Icon/OrderSynchronization.png"/>
+                </dui:DazzleTabItem.Background>
+                <dui:DazzleTabItem.MyMoverBrush>
+                    <ImageBrush ImageSource="Skin/Bd/mover.png"/>
+                </dui:DazzleTabItem.MyMoverBrush>
+                <dui:DazzleTabItem.MyEnterBrush>
+                    <ImageBrush ImageSource="Skin/Bd/enter.png"/>
+                </dui:DazzleTabItem.MyEnterBrush>
+                <local:ErpSynchronous Width="Auto" Height="Auto" />
+            </dui:DazzleTabItem>
+            
+            <!--系统配置-->
+            <dui:DazzleTabItem Width="80" Height="75" Foreground="White" Header="系统配置">
+                <dui:DazzleTabItem.Background>
+                    <ImageBrush ImageSource="Skin/Icon/Setting.png"/>
+                </dui:DazzleTabItem.Background>
+                <dui:DazzleTabItem.MyMoverBrush>
+                    <ImageBrush ImageSource="Skin/Bd/mover.png"/>
+                </dui:DazzleTabItem.MyMoverBrush>
+                <dui:DazzleTabItem.MyEnterBrush>
+                    <ImageBrush ImageSource="Skin/Bd/enter.png"/>
+                </dui:DazzleTabItem.MyEnterBrush>
+                <local:Setting/>
+            </dui:DazzleTabItem>
+
+
+
+        </dui:DazzleTabControl>
+
+
+
+    </Grid>
+</dui:DazzleWindow>

@@ -8,21 +8,22 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
+            <ColumnDefinition />
         </Grid.ColumnDefinitions>
         <Grid  >
             <Grid.RowDefinitions>
                 <RowDefinition Height="35"/>
                 <RowDefinition />
             </Grid.RowDefinitions>
-            
 
-            <Button Background="#FF00478D" VerticalAlignment="Center" Width="80" HorizontalAlignment="Right" >开始同步</Button>
+
+            <Button Background="#FF00478D" VerticalAlignment="Center" Width="80" HorizontalAlignment="Right" >自动处理</Button>
 
             <DataGrid x:Name="dag" Grid.Row="1">
 
             </DataGrid>
             <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                <Label x:Name="label" Content="在线人数：" VerticalAlignment="Center"/>
+                <Label x:Name="label" Content="总记录数：" VerticalAlignment="Center"/>
                 <TextBlock Text="10人" VerticalAlignment="Center" ></TextBlock>
             </StackPanel>
 

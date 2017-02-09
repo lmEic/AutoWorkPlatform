@@ -40,6 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AttendanceMachineUpdataServer\AttendanceUpdateLogServer.cs" />
+    <Compile Include="AttendanceMachineUpdataServer\AttendanceUpdateTerminal.cs" />
+    <Compile Include="AttendanceMachineUpdataServer\AttendanceUpSynchronous.cs" />
     <Compile Include="Attendance\AttendanceDataManger.cs" />
     <Compile Include="Attendance\AttendSlodFingerDataCurrentMonthModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

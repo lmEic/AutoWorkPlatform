@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Lm.Eic.Uti.Common.YleeDbHandler;
+using Lm.Eic.AutoWorkProcess.Attendance;
+using System.Data;
 
 namespace Lm.Eic.AutoWorkProcess.AttendanceMachineUpdataServer
 {
@@ -23,6 +26,84 @@ namespace Lm.Eic.AutoWorkProcess.AttendanceMachineUpdataServer
             get
             {  return _msg; }
         }
+        /// <summary>
+        /// 所有用户列表
+        /// </summary>
+        private  List<AttendFingerPrintDataInTimeModel> AllUserList { get; set; } = new List<AttendFingerPrintDataInTimeModel>();
+
+        /// <summary>
+        /// 刷新所有用户列表
+        /// </summary>
+        private void RefreshUserList()
+        {
+            try
+            {
+                AllUserList.Clear();
+                foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
+                {
+                    var tem = new AttendFingerPrintDataInTimeModel();
+                    if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
+                    {
+                        tem.WorkerId = dr["WorkerId"].ToString().Trim();
+                    }
+
+                    if (dr["Name"] != null && dr["Name"].ToString() != "")
+                    {
+                        tem.WorkerName  = dr["Name"].ToString().Trim();
+                    }
+                    if (dr["CardID"] != null && dr["CardID"].ToString() != "")
+                    {
+                        tem.CardID = dr["CardID"].ToString().Trim();
+                    }
+                    AllUserList.Add(tem);
+                }
+            }
+            catch
+            {
+                //使用邮件发送错误信息
+            }
+        }
+
+        public  void Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        {
+           
+            try
+            {
+                if (AllUserList == null && AllUserList.Count == 0)
+                {
+                    RefreshUserList();
+                }
+                var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                if (userInfo == null)
+                {
+                    RefreshUserList();
+                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                }
+                else
+                {
+                    var tem = new AttendFingerPrintDataInTimeModel(); 
+                    tem.WorkerId = userInfo.WorkerId;
+                    tem.WorkerName = userInfo.WorkerName ;
+                    tem.CardID = userInfo.CardID;
+                    if (anVerifyMode == "FP")
+                        tem.CardType = "指纹";
+                    else if (anVerifyMode == "Face")
+                        tem.CardType = "脸部";
+                    else if (anVerifyMode == "")
+                        tem.CardType = "卡片";
+                    tem.SlodCardTime = anLogDate;
+                    tem.SlodCardDate = anLogDate.Date;
+                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.CardID}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
+                    DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
+                  
+                }
+            }
+            catch (Exception )
+            {
+                
+            }
+        }
+
         public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
             Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
         {
@@ -49,7 +130,7 @@ namespace Lm.Eic.AutoWorkProcess.AttendanceMachineUpdataServer
                 }
                 // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
                //上专数据到服务器上
-                //SbxLib.DbOption.DbOption.Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber);
+                Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber);
                 return true;
             }
             catch (Exception)

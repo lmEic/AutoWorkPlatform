@@ -1,14 +1,148 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Lm.Eic.Uti.Common.YleeDbHandler;
+using Lm.Eic.Uti.Common.YleeExtension.FileOperation;
+using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 
-namespace Lm.Eic.AutoWorkProcess.AttendanceMachineUpdataServer
+namespace Lm.Eic.AutoWorkProcess.Attendance
 {
+    /// <summary>
+    /// 时间日志回调
+    /// </summary>
+    /// <returns></returns>
+
+    public delegate void PingCallback
+         (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID);
+    public delegate Boolean AlarmLogCallback
+        (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
+        DateTime LogTime, Int64 UserID, Int32 DoorID,
+        String AlarmType);
+    public delegate Boolean AdminLogCallback
+        (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
+        DateTime LogTime, Int64 AdminID, Int64 UserID,
+        String Action,
+        Int32 Result);
+    public delegate Boolean TimeLogCallback
+        (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
+        DateTime LogTime, Int64 UserID, Int32 DoorID,
+        String AttendanceStatus,
+        String VerifyMode,
+        Int32 JobCode,
+        String Antipass,
+        Byte[] Photo);
+    public class AttendanceUpdateLogServer
+    {
+
+        public Boolean m_Disposed;
+        public UInt16 m_PortNo;
+        public TcpListener m_Listner;
+        static LinkedList<AttendanceUpdateTerminal> m_TerminalList = new LinkedList<AttendanceUpdateTerminal>();
+
+        public TimeLogCallback m_TimeLogCallBack = null;
+        public AdminLogCallback m_AdminLogCallBack = null;
+        public AlarmLogCallback m_AlarmLogCallBack = null;
+        public PingCallback m_PingCallBack = null;
+
+        public AttendanceUpdateLogServer(UInt16 portNo,
+            TimeLogCallback timeLogCallback,
+            AdminLogCallback adminLogCallback,
+            AlarmLogCallback alarmLogCallback,
+            PingCallback pingCallback)
+        {
+            // Initialize objects.
+            m_Disposed = false;
+            m_PortNo = portNo;
+            m_TimeLogCallBack = timeLogCallback;
+            m_AdminLogCallBack = adminLogCallback;
+            m_AlarmLogCallBack = alarmLogCallback;
+            m_PingCallBack = pingCallback;
+
+            // Start TCP Listner.
+            m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
+            m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            m_Listner.Start();
+
+            // Begin Accept.
+            m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
+        }
+
+        ~AttendanceUpdateLogServer()
+        {
+            CleanUp(false);
+        }
+
+        private void CleanUp(bool dispose)
+        {
+            if (m_Disposed)
+                return;
+
+            m_Disposed = true;
+
+            if (dispose)
+            {
+                // Dispose the listener and terminals.
+                try
+                {
+                    m_Listner.Stop();
+                    foreach (AttendanceUpdateTerminal e in m_TerminalList)
+                    {
+                        if (e != null)
+                            e.Dispose();
+                    }
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            CleanUp(true);
+        }
+
+        public static void OnAccept(IAsyncResult iar)
+        {
+            AttendanceUpdateLogServer server = (AttendanceUpdateLogServer)iar.AsyncState;
+            AttendanceUpdateTerminal term = new AttendanceUpdateTerminal(server.m_TimeLogCallBack,
+                server.m_AdminLogCallBack,
+                server.m_AlarmLogCallBack,
+                server.m_PingCallBack);
+
+            try
+            {
+                // Establish connection and add a terminal into the list.
+                term.EstablishConnect(server.m_Listner.EndAcceptTcpClient(iar));
+                m_TerminalList.AddLast(term);
+            }
+            catch
+            {
+                term.Dispose();
+            }
+
+            try
+            {
+                // For disposed listener.
+                server.m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), server);
+            }
+            catch
+            {
+
+            }
+        }
+    }
+
+
+    
     public  class AttendanceUpdateTerminal
     {
          public Boolean m_Disposed;
@@ -598,5 +732,225 @@ namespace Lm.Eic.AutoWorkProcess.AttendanceMachineUpdataServer
             }
         }
     }
-    }
 
+
+
+    public  class AttendanceUpSynchronous
+    {
+      
+    
+        AttendanceUpdateLogServer m_LogServer;          // Log Server
+       
+       private  string _msg;
+        /// <summary>
+        /// 返的信息
+        /// </summary>
+        public string Msg
+        {
+            set {  _msg=value ; }
+            get {  return _msg; }
+        }
+        /// <summary>
+        /// 所有用户列表
+        /// </summary>
+        private  List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
+
+        /// <summary>
+        /// 刷新所有用户列表
+        /// </summary>
+        private void RefreshUserList()
+        {
+            try
+            {
+                AllUserList.Clear();
+                foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
+                {
+                    var tem = new AttendFingerPrintDataInTimeModel();
+                    if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
+                    {
+                        tem.WorkerId = dr["WorkerId"].ToString().Trim();
+                    }
+
+                    if (dr["Name"] != null && dr["Name"].ToString() != "")
+                    {
+                        tem.WorkerName  = dr["Name"].ToString().Trim();
+                    }
+                    if (dr["CardID"] != null && dr["CardID"].ToString() != "")
+                    {
+                        tem.CardID = dr["CardID"].ToString().Trim();
+                    }
+                    AllUserList.Add(tem);
+                }
+            }
+            catch
+            {
+                //使用邮件发送错误信息
+            }
+        }
+        /// <summary>
+        /// 存入到数据数库内
+        /// </summary>
+        /// <param name="UserID"></param>
+        /// <param name="anVerifyMode"></param>
+        /// <param name="anLogDate"></param>
+        /// <param name="astrSerialNo"></param>
+        private  void Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        {
+           
+            try
+            {
+                if (AllUserList == null && AllUserList.Count == 0)
+                {
+                    RefreshUserList();
+                }
+                var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                if (userInfo == null)
+                {
+                    RefreshUserList();
+                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                }
+                else
+                {
+                    var tem = new AttendFingerPrintDataInTimeModel(); 
+                    tem.WorkerId = userInfo.WorkerId;
+                    tem.WorkerName = userInfo.WorkerName ;
+                    tem.CardID = userInfo.CardID;
+                    if (anVerifyMode == "FP")
+                        tem.CardType = "指纹";
+                    else if (anVerifyMode == "Face")
+                        tem.CardType = "脸部";
+                    else if (anVerifyMode == "")
+                        tem.CardType = "卡片";
+                    tem.SlodCardTime = anLogDate;
+                    tem.SlodCardDate = anLogDate.Date;
+                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.CardID}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
+                   int  i= DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
+                  
+                }
+            }
+            catch (Exception )
+            {
+                
+            }
+        }
+        #region  处理返回的信息
+        private Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
+        {
+            try
+            {
+                _msg = "[" + terminalType + ":";
+                _msg += terminalID.ToString();
+                _msg += " SN=" + serialNumber + "] ";
+                _msg += "TimeLog";
+                _msg += "(" + transactionID.ToString() + ") ";
+                _msg += logTime.ToString() + ", ";
+                _msg += "UserID=" + String.Format("{0}, ", userID);
+                _msg += "Door=" + doorID.ToString() + ", ";
+                _msg += "AttendStat=" + attendanceStatus + ", ";
+                _msg += "VMode=" + verifyMode + ", ";
+                _msg += "JobCode=" + jobCode.ToString() + ", ";
+                _msg += "Antipass=" + antipass + ", ";
+                if (photo == null)
+                    _msg += "Photo=No";
+                else
+                {
+                    _msg += "Photo=Yes ";
+                    _msg += "(" + Convert.ToString(photo.Length) + "bytes)";
+                }
+                ///数据备份到C盘
+                FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", _msg);
+                // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                //上专数据到服务器上
+                Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 adminID, Int64 userID, String action, Int32 result)
+        {
+            try
+            {
+                _msg = "[" + terminalType + ":";
+                _msg += terminalID.ToString();
+                _msg += " SN=" + serialNumber + "] ";
+                _msg += "AdminLog";
+                _msg += "(" + transactionID.ToString() + ") ";
+                _msg += logTime.ToString() + ", ";
+                _msg += "AdminID=" + String.Format("{0}, ", adminID);
+                _msg += "UserID=" + String.Format("{0}, ", userID);
+                _msg += "Action=" + action + ", ";
+                _msg += "Status=" + String.Format("{0:D}", result);
+                ///数据备份到C盘
+                FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate ()+".txt", _msg);
+                // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 userID, Int32 doorID, String alarmType)
+        {
+            try
+            {
+                _msg = "[" + terminalType + ":";
+                _msg += terminalID.ToString();
+                _msg += " SN=" + serialNumber + "] ";
+                _msg += "AlarmLog";
+                _msg += "(" + transactionID.ToString() + ") ";
+                _msg += "DateTime:";
+                _msg += logTime.ToString() + ", ";//'at'
+                _msg += "UserID=" + String.Format("{0}, ", userID);
+                _msg += "Door=" + doorID.ToString() + ", ";
+                _msg += "Type=" + alarmType;
+                ///数据备份到C盘
+                FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", _msg);
+                // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
+        {
+            _msg = "[" + terminalType + ":";
+            _msg += terminalID.ToString();
+            _msg += " SN=" + serialNumber + "] ";
+            _msg += "KeepAlive";
+            _msg += "(" + transactionID.ToString() + ") ";
+            //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+        }
+        #endregion
+
+        public void MonitoringThread(object state)
+        {
+            UInt16 portNum = 5005; // Get port number.
+
+            m_LogServer = new AttendanceUpdateLogServer(portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
+
+            //// Watch stop signal.
+            //while (m_Running)
+            //{
+            //    Thread.Sleep(1000);  // Simulate some lengthy operations.
+            //}
+
+            //m_LogServer.Dispose();  // Dispose log server
+            //m_StopEvent.Set();
+            //// Watch stop signal.
+            // Signal the stopped event.
+        }
+    }
+}

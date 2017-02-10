@@ -829,22 +829,18 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <param name="anVerifyMode"></param>
         /// <param name="anLogDate"></param>
         /// <param name="astrSerialNo"></param>
-        private  void Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        private  bool  Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo,out string UpMsg)
         {
            
             try
             {
-                if (AllUserList == null && AllUserList.Count == 0)
+                bool  returnString = false ;
+                if (AllUserList == null || AllUserList.Count == 0)
                 {
                     RefreshUserList();
                 }
                 var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                if (userInfo == null)
-                {
-                    RefreshUserList();
-                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                }
-                else
+                if (userInfo != null)
                 {
                     var tem = new AttendFingerPrintDataInTimeModel();
                     tem.WorkerId = userInfo.WorkerId;
@@ -860,13 +856,26 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     tem.SlodCardDate = anLogDate.Date;
                     string strSql = string.Format(" INSERT INTO Attendance_FingerPrintDataInTime  VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{4}')",
                                                    tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
-                   int  i= DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
-                  
+                    int i = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
+                    if (i > 0)
+                    {
+                        UpMsg = tem.WorkerName + "数据据上传成功";
+                        returnString = true;
+                    }
+                    else UpMsg = tem.WorkerName + "数据据上传失败";
                 }
+                else
+                {
+                    RefreshUserList();
+                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                    UpMsg = "没有此人" + UserID.ToString("000000") + "工号";
+                }
+                return returnString;
             }
             catch (Exception )
             {
-                
+                UpMsg = "数据据上传失败";
+                return false ;
             }
         }
         #region  处理返回的信息
@@ -898,7 +907,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", _msg);
                 // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
                 //上专数据到服务器上
-                Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber);
+                string upmesg = string.Empty;
+                bool  isUpdata= Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber, out upmesg);
+                if (!isUpdata) FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", upmesg); 
                 return true;
             }
             catch (Exception)

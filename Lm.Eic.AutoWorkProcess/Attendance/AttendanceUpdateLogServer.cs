@@ -42,7 +42,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     {
 
         public Boolean m_Disposed;
-        public UInt16 m_PortNo;
+      
         public TcpListener m_Listner;
         static LinkedList<AttendanceUpdateTerminal> m_TerminalList = new LinkedList<AttendanceUpdateTerminal>();
 
@@ -59,17 +59,15 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             // Initialize objects.
             m_Disposed = false;
-            m_PortNo = portNo;
             m_TimeLogCallBack = timeLogCallback;
             m_AdminLogCallBack = adminLogCallback;
             m_AlarmLogCallBack = alarmLogCallback;
             m_PingCallBack = pingCallback;
 
             // Start TCP Listner.
-            m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
+            m_Listner = new TcpListener(IPAddress.Any, portNo);
             m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             m_Listner.Start();
-
             // Begin Accept.
             m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
         }
@@ -740,8 +738,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
       
     
         AttendanceUpdateLogServer m_LogServer;          // Log Server
-       
-       private  string _msg;
+        Boolean m_Running=false;              // Is Running Monitor Thread?
+        ManualResetEvent m_StopEvent;   // stop event
+
+        private  string _msg;
         /// <summary>
         /// 返的信息
         /// </summary>
@@ -749,6 +749,15 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             set {  _msg=value ; }
             get {  return _msg; }
+        }
+        private UInt16 _portNum = 5005;
+        /// <summary>
+        /// 扫描端口
+        /// </summary>
+        public UInt16 PortNum
+        {
+            set { _portNum = value; }
+            get { return _portNum; }
         }
         /// <summary>
         /// 所有用户列表
@@ -935,22 +944,37 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         }
         #endregion
 
-        public void MonitoringThread(object state)
+        private void ClosingAttendanceUpSynchronous()
         {
-            UInt16 portNum = 5005; // Get port number.
+            if (m_Running)
+            {
+                m_Running = false;
+                m_StopEvent.WaitOne();
+            }
+        }
 
-            m_LogServer = new AttendanceUpdateLogServer(portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
 
-            //// Watch stop signal.
-            //while (m_Running)
-            //{
-            //    Thread.Sleep(1000);  // Simulate some lengthy operations.
-            //}
+        public void OpenAttendanceUpSynchronous()
+        {
+            m_Running = true;
+            m_StopEvent = new ManualResetEvent(false);
 
-            //m_LogServer.Dispose();  // Dispose log server
-            //m_StopEvent.Set();
-            //// Watch stop signal.
-            // Signal the stopped event.
+            ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
+        }
+       private void MonitoringThread(object state)
+        {
+            m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
+
+            // Watch stop signal.
+            while (m_Running)
+            {
+                Thread.Sleep(1000);  // Simulate some lengthy operations.
+            }
+
+            m_LogServer.Dispose();  // Dispose log server
+            m_StopEvent.Set();
+            // Watch stop signal.
+            //Signal the stopped event.
         }
     }
 }

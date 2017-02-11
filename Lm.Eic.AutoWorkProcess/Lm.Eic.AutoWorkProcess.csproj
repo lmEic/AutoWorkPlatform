@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attendance\AttendanceDataManger.cs" />
+    <Compile Include="Attendance\AttendanceMachineUpData.cs" />
     <Compile Include="Attendance\AttendSlodFingerDataCurrentMonthModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

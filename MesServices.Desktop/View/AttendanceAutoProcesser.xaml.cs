@@ -11,7 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MES.Business;
+using MesServices.Desktop.ViewModel;
 
 namespace MesServices.Desktop
 {
@@ -20,9 +20,12 @@ namespace MesServices.Desktop
     /// </summary>
     public partial class OnLine : UserControl
     {
+        private AttendanceProcesserViewModel vm = null;
         public OnLine()
         {
             InitializeComponent();
+            vm = new ViewModel.AttendanceProcesserViewModel();
+            this.DataContext = vm;
         }
 
      

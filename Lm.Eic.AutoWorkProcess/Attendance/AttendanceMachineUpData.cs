@@ -19,18 +19,18 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     /// </summary>
     /// <returns></returns>
 
-    public delegate void PingCallback
+    internal delegate void PingCallback
          (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID);
-    public delegate Boolean AlarmLogCallback
+    internal delegate Boolean AlarmLogCallback
         (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
         DateTime LogTime, Int64 UserID, Int32 DoorID,
         String AlarmType);
-    public delegate Boolean AdminLogCallback
+    internal delegate Boolean AdminLogCallback
         (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
         DateTime LogTime, Int64 AdminID, Int64 UserID,
         String Action,
         Int32 Result);
-    public delegate Boolean TimeLogCallback
+    internal delegate Boolean TimeLogCallback
         (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
         DateTime LogTime, Int64 UserID, Int32 DoorID,
         String AttendanceStatus,
@@ -38,7 +38,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         Int32 JobCode,
         String Antipass,
         Byte[] Photo);
-    public class AttendanceUpdateLogServer
+   internal class AttendanceUpdateLogServer
     {
 
         public Boolean m_Disposed;
@@ -141,7 +141,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
 
     
-    public  class AttendanceUpdateTerminal
+    internal  class AttendanceUpdateTerminal
     {
          public Boolean m_Disposed;
         public TcpClient m_Client;

@@ -16,18 +16,20 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
 
-
-            <Button Background="#FF00478D"  Command="{Binding }" VerticalAlignment="Center" Width="80" HorizontalAlignment="Right" >自动处理</Button>
+            
+            <Button Background="#FF00478D" VerticalAlignment="Center" Width="80"
+                    HorizontalAlignment="Right" Content="{Binding Path=AutoHandleCommandText}"
+                    Command="{Binding Path=AutoProcessAttendanceDataCmd}">
+             </Button>
 
             <DataGrid x:Name="dag" Grid.Row="1">
 
             </DataGrid>
             <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                <Label x:Name="label" Content="总记录数：" VerticalAlignment="Center"/>
-                <TextBlock Text="10人" VerticalAlignment="Center" ></TextBlock>
+                <Label Content="选择日期：" VerticalAlignment="Center"/>
+                <DatePicker Width="150" Height="28" SelectedDate="{Binding Path=SlodCardDate,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"></DatePicker>
+                <Label Content="{Binding Path=ProcessMessage}" VerticalAlignment="Center"/>
             </StackPanel>
-
-
         </Grid>
     </Grid>
 </UserControl>

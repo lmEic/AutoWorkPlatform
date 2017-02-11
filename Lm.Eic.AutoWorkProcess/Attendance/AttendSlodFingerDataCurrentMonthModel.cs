@@ -148,150 +148,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             set { _slotcardtime = value; }
             get { return _slotcardtime; }
         }
-
-        private string _leavetype;
-
-        /// <summary>
-        ///假别名称
-        /// </summary>
-        public string LeaveType
-        {
-            set { _leavetype = value; }
-            get { return _leavetype; }
-        }
-
-        private double _leavehours;
-
-        /// <summary>
-        ///请假时数
-        /// </summary>
-        public double LeaveHours
-        {
-            set { _leavehours = value; }
-            get { return _leavehours; }
-        }
-
-        private string _leavetimeregion;
-
-        /// <summary>
-        ///请假时段
-        /// </summary>
-        public string LeaveTimeRegion
-        {
-            set { _leavetimeregion = value; }
-            get { return _leavetimeregion; }
-        }
-
-        private string _leavedescription;
-
-        /// <summary>
-        ///请假详述
-        /// </summary>
-        public string LeaveDescription
-        {
-            set { _leavedescription = value; }
-            get { return _leavedescription; }
-        }
-
-        private string _leavememo;
-
-        /// <summary>
-        ///请假备注
-        /// </summary>
-        public string LeaveMemo
-        {
-            set { _leavememo = value; }
-            get { return _leavememo; }
-        }
-
-        private int _leavemark;
-
-        /// <summary>
-        ///请假标识
-        /// </summary>
-        public int LeaveMark
-        {
-            set { _leavemark = value; }
-            get { return _leavemark; }
-        }
-
-        private int _slotexceptionmark;
-
-        /// <summary>
-        ///刷卡异常标识
-        /// </summary>
-        public int SlotExceptionMark
-        {
-            set { _slotexceptionmark = value; }
-            get { return _slotexceptionmark; }
-        }
-
-        private string _slotexceptiontype;
-
-        /// <summary>
-        ///刷卡异常类型
-        /// </summary>
-        public string SlotExceptionType
-        {
-            set { _slotexceptiontype = value; }
-            get { return _slotexceptiontype; }
-        }
-
-        private string _slotexceptionmemo;
-
-        /// <summary>
-        ///刷卡异常备注
-        /// </summary>
-        public string SlotExceptionMemo
-        {
-            set { _slotexceptionmemo = value; }
-            get { return _slotexceptionmemo; }
-        }
-
-        private int _handleslotexceptionstatus;
-
-        /// <summary>
-        ///处理刷卡异常状态
-        /// </summary>
-        public int HandleSlotExceptionStatus
-        {
-            set { _handleslotexceptionstatus = value; }
-            get { return _handleslotexceptionstatus; }
-        }
-
-        private string _forgetslotreason;
-
-        /// <summary>
-        ///漏刷卡原因
-        /// </summary>
-        public string ForgetSlotReason
-        {
-            set { _forgetslotreason = value; }
-            get { return _forgetslotreason; }
-        }
-
-        private string _opperson;
-
-        /// <summary>
-        ///操作人
-        /// </summary>
-        public string OpPerson
-        {
-            set { _opperson = value; }
-            get { return _opperson; }
-        }
-
-        private string _opsign;
-
-        /// <summary>
-        ///操作标志
-        /// </summary>
-        public string OpSign
-        {
-            set { _opsign = value; }
-            get { return _opsign; }
-        }
-
         private decimal _id_key;
 
         /// <summary>
@@ -507,5 +363,14 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 return "data:image/jpg;base64," + (this.PersonalPicture != null ? Convert.ToBase64String(this.PersonalPicture) : "");
             }
         }
+    }
+    /// <summary>
+    /// 班别信息模型
+    /// </summary>
+    public partial class ClassTypeModel
+    {
+        public string WorkerId { get; set;}
+
+        public string ClassType { get; set;}
     }
 }

@@ -9,10 +9,11 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MesServices.Desktop</RootNamespace>
     <AssemblyName>MesServices.Desktop</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -23,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,6 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DALFactory">
@@ -204,17 +207,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ViewModel\AttendanceUpDataServerViewModel.cs" />
+    <Compile Include="ViewModel\AttendanceProcesserViewModel.cs" />
     <Compile Include="ViewModel\TotalControlsViewModel.cs" />
     <Compile Include="ViewModel\ErpSynchronousViewModel.cs" />
+    <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\TotalControls.xaml.cs">
       <DependentUpon>TotalControls.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\DataUpload.xaml.cs">
       <DependentUpon>DataUpload.xaml</DependentUpon>
     </Compile>
-    <Compile Include="View\OnLine.xaml.cs">
-      <DependentUpon>OnLine.xaml</DependentUpon>
+    <Compile Include="View\AttendanceAutoProcesser.xaml.cs">
+      <DependentUpon>AttendanceAutoProcesser.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Setting.xaml.cs">
       <DependentUpon>Setting.xaml</DependentUpon>
@@ -239,7 +243,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="View\OnLine.xaml">
+    <Page Include="View\AttendanceAutoProcesser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -320,6 +324,14 @@
     <ProjectReference Include="..\Business\Business.csproj">
       <Project>{71994db2-5ddd-48e0-9019-97c9f2df3b79}</Project>
       <Name>Business</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Lm.Eic.AutoWorkProcess\Lm.Eic.AutoWorkProcess.csproj">
+      <Project>{47dba61b-55e3-41df-a2ff-a5d5ae250c7a}</Project>
+      <Name>Lm.Eic.AutoWorkProcess</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Lm.Eic.Uti.Common\Lm.Eic.Uti.Common\Lm.Eic.Uti.Common.csproj">
+      <Project>{35fa689a-9ef7-4944-8a6e-0cf9f2cacdde}</Project>
+      <Name>Lm.Eic.Uti.Common</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

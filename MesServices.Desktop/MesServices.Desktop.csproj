@@ -204,6 +204,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModel\AttendanceUpDataServerViewModel.cs" />
     <Compile Include="ViewModel\TotalControlsViewModel.cs" />
     <Compile Include="ViewModel\ErpSynchronousViewModel.cs" />
     <Compile Include="View\TotalControls.xaml.cs">

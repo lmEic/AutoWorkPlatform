@@ -733,7 +733,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
 
     /// <summary>
-    /// 
+    /// 异步上传服务
     /// </summary>
     public  class AttendanceUpSynchronous
     {

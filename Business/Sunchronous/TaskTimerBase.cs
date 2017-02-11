@@ -21,7 +21,7 @@ namespace Business
         /// </summary>
         public TaskTimerBase()
         {
-            tim.Interval = 1000;                              //设置
+            tim.Interval = 10;                              //设置
             tim.Elapsed += new ElapsedEventHandler(Theout);   //到达时间的时候执行事件；   
             Reset();
             WriteLog("初始化完成！");

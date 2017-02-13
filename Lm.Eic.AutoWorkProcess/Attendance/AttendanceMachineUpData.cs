@@ -734,12 +734,15 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     public  class AttendanceUpSynchronous
     {
         AttendanceUpdateLogServer m_LogServer;          // Log Server
-        Boolean m_Running=false;              // Is Running Monitor Thread?
+        Boolean m_Running=false;              // Is Running Monitor Thread
         ManualResetEvent m_StopEvent;   // stop event
        
         public Action<string> ReportUpdataMsg { get; set; }
-      
         private UInt16 _portNum = 5005;
+
+        List<MsgCell> msgList = new List<MsgCell>();
+        int rowId = 0;
+        StringBuilder msgSb = new StringBuilder();
         /// <summary>
         /// 扫描端口
         /// </summary>
@@ -753,7 +756,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// 所有用户列表
         /// </summary>
         private  List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
-
         /// <summary>
         /// 刷新所有用户列表
         /// </summary>
@@ -821,8 +823,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
                         tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
                     returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) > 1 ? true : false;
-                    
-                   
                 }
                 else
                 {
@@ -868,12 +868,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                if(! Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
                 //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
                FileOperationExtension.AppendFile(@"C:\Sbx\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
-                //BeginInvoke(new delegateAddEvent(OnAddEvent), _msg);
-                //上专数据到服务器上
-                if (ReportUpdataMsg != null)
-                {
-                    ReportUpdataMsg(msg);
-                }
+                RetrunShowInfo(msg);
                 return true;
             }
             catch (Exception)
@@ -899,16 +894,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 msg += "UserID=" + String.Format("{0}, ", userID);
                 msg += "Action=" + action + ", ";
                 msg += "Status=" + String.Format("{0:D}", result);
-                if (ReportUpdataMsg != null)
-                {
-                    ReportUpdataMsg(msg);
-                }
-                //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
-                if (ReportUpdataMsg != null)
-                {
-                    ReportUpdataMsg(msg);
-                }
-
+                RetrunShowInfo(msg);
                 return true;
             }
             catch (Exception)
@@ -932,11 +918,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 msg += "UserID=" + String.Format("{0}, ", userID);
                 msg += "Door=" + doorID.ToString() + ", ";
                 msg += "Type=" + alarmType;
-                if (ReportUpdataMsg != null)
-                {
-                    ReportUpdataMsg(msg);
-                }
-                //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                RetrunShowInfo(msg);
                 return true;
             }
             catch (Exception)
@@ -947,17 +929,31 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         public void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
         {
-            String msg;
-            msg = "[" + terminalType + ":";
+            String msg = "[" + terminalType + ":";
             msg += terminalID.ToString();
             msg += " SN=" + serialNumber + "] ";
             msg += "KeepAlive";
             msg += "(" + transactionID.ToString() + ") ";
+            RetrunShowInfo(msg);
+        }
+
+        private void RetrunShowInfo(string msg)
+        {
+            if (msgList.Count >= 100)
+            {
+                msgList.Clear();
+                rowId = 0;
+                msgSb.Clear();
+            }
+            rowId += 1;
+            msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });
+
+            msgList = msgList.OrderByDescending(o => o.RowId).ToList();
+            msgList.ForEach(m => { msgSb.AppendLine(m.Msg); });
             if (ReportUpdataMsg != null)
             {
-                ReportUpdataMsg(msg);
+                ReportUpdataMsg(msgSb.ToString());
             }
-            //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
         }
         #endregion
 
@@ -996,5 +992,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             // Watch stop signal.
             //Signal the stopped event.
         }
+    }
+
+    public class MsgCell
+    {
+        public int RowId { get; set; }
+        public string Msg {get;set;}
     }
 }

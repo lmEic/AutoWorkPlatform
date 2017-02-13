@@ -11,6 +11,7 @@ using System.Xml;
 using Lm.Eic.Uti.Common.YleeDbHandler;
 using Lm.Eic.Uti.Common.YleeExtension.FileOperation;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
+using System.IO;
 
 namespace Lm.Eic.AutoWorkProcess.Attendance
 {
@@ -38,11 +39,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         Int32 JobCode,
         String Antipass,
         Byte[] Photo);
-   internal class AttendanceUpdateLogServer
+   internal class AttendanceUpdateLogServer : IDisposable
     {
-
         public Boolean m_Disposed;
-      
+        public UInt16 m_PortNo;
         public TcpListener m_Listner;
         static LinkedList<AttendanceUpdateTerminal> m_TerminalList = new LinkedList<AttendanceUpdateTerminal>();
 
@@ -59,15 +59,17 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             // Initialize objects.
             m_Disposed = false;
+            m_PortNo = portNo;
             m_TimeLogCallBack = timeLogCallback;
             m_AdminLogCallBack = adminLogCallback;
             m_AlarmLogCallBack = alarmLogCallback;
             m_PingCallBack = pingCallback;
 
             // Start TCP Listner.
-            m_Listner = new TcpListener(IPAddress.Any, portNo);
+            m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
             m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             m_Listner.Start();
+
             // Begin Accept.
             m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
         }
@@ -140,10 +142,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     }
 
 
-    
-    internal  class AttendanceUpdateTerminal
+
+    internal class AttendanceUpdateTerminal : IDisposable
     {
-         public Boolean m_Disposed;
+      
+        public Boolean m_Disposed;
         public TcpClient m_Client;
         public NetworkStream m_Stream;
         public Timer m_TimerAlive;
@@ -580,7 +583,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             String eventType;
             Int32 transId;
 
-            doc.Load(new System.IO.StringReader(message));
+            doc.Load(new StringReader(message));
 
             //----------------- Terminal type
             try
@@ -740,7 +743,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         AttendanceUpdateLogServer m_LogServer;          // Log Server
         Boolean m_Running=false;              // Is Running Monitor Thread?
         ManualResetEvent m_StopEvent;   // stop event
-
+        public delegate void delegateAddEvent(string msg);
+      
         private  string _msg;
         /// <summary>
         /// 返的信息
@@ -759,6 +763,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             set { _portNum = value; }
             get { return _portNum; }
         }
+        #region 数据库入存
         /// <summary>
         /// 所有用户列表
         /// </summary>
@@ -803,26 +808,22 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <param name="anVerifyMode"></param>
         /// <param name="anLogDate"></param>
         /// <param name="astrSerialNo"></param>
-        private  void Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        private  bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
         {
            
             try
             {
+                bool returnBool = false;
                 if (AllUserList == null && AllUserList.Count == 0)
                 {
                     RefreshUserList();
                 }
                 var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                if (userInfo == null)
+                if (userInfo != null)
                 {
-                    RefreshUserList();
-                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                }
-                else
-                {
-                    var tem = new AttendFingerPrintDataInTimeModel(); 
+                    var tem = new AttendFingerPrintDataInTimeModel();
                     tem.WorkerId = userInfo.WorkerId;
-                    tem.WorkerName = userInfo.WorkerName ;
+                    tem.WorkerName = userInfo.WorkerName;
                     tem.CardID = userInfo.CardID;
                     if (anVerifyMode == "FP")
                         tem.CardType = "指纹";
@@ -832,46 +833,59 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                         tem.CardType = "卡片";
                     tem.SlodCardTime = anLogDate;
                     tem.SlodCardDate = anLogDate.Date;
-                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.CardID}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
-                   int  i= DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
-                  
+                    string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
+                        tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
+                    returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) > 1 ? true : false;
+                    
+                   
                 }
+                else
+                {
+                    RefreshUserList();
+                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                }
+                return returnBool;
             }
             catch (Exception )
             {
-                
+                return false;
+
             }
         }
+        #endregion
         #region  处理返回的信息
-        private Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+
+        public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
             Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
         {
+            String msg;
             try
             {
-                _msg = "[" + terminalType + ":";
-                _msg += terminalID.ToString();
-                _msg += " SN=" + serialNumber + "] ";
-                _msg += "TimeLog";
-                _msg += "(" + transactionID.ToString() + ") ";
-                _msg += logTime.ToString() + ", ";
-                _msg += "UserID=" + String.Format("{0}, ", userID);
-                _msg += "Door=" + doorID.ToString() + ", ";
-                _msg += "AttendStat=" + attendanceStatus + ", ";
-                _msg += "VMode=" + verifyMode + ", ";
-                _msg += "JobCode=" + jobCode.ToString() + ", ";
-                _msg += "Antipass=" + antipass + ", ";
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "TimeLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Door=" + doorID.ToString() + ", ";
+                msg += "AttendStat=" + attendanceStatus + ", ";
+                msg += "VMode=" + verifyMode + ", ";
+                msg += "JobCode=" + jobCode.ToString() + ", ";
+                msg += "Antipass=" + antipass + ", ";
                 if (photo == null)
-                    _msg += "Photo=No";
+                    msg += "Photo=No";
                 else
                 {
-                    _msg += "Photo=Yes ";
-                    _msg += "(" + Convert.ToString(photo.Length) + "bytes)";
+                    msg += "Photo=Yes ";
+                    msg += "(" + Convert.ToString(photo.Length) + "bytes)";
                 }
-                ///数据备份到C盘
-                FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", _msg);
-                // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+               if( Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
+                //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+               FileOperationExtension.AppendFile(@"C:\Sbx\" + logTime.ToDate().ToString()+".txt", msg);
+                //BeginInvoke(new delegateAddEvent(OnAddEvent), _msg);
                 //上专数据到服务器上
-                Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber);
+               
                 return true;
             }
             catch (Exception)
@@ -880,24 +894,26 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
         }
 
-        private Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+        public Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
             Int64 adminID, Int64 userID, String action, Int32 result)
         {
+            String msg;
+
             try
             {
-                _msg = "[" + terminalType + ":";
-                _msg += terminalID.ToString();
-                _msg += " SN=" + serialNumber + "] ";
-                _msg += "AdminLog";
-                _msg += "(" + transactionID.ToString() + ") ";
-                _msg += logTime.ToString() + ", ";
-                _msg += "AdminID=" + String.Format("{0}, ", adminID);
-                _msg += "UserID=" + String.Format("{0}, ", userID);
-                _msg += "Action=" + action + ", ";
-                _msg += "Status=" + String.Format("{0:D}", result);
-                ///数据备份到C盘
-                FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate ()+".txt", _msg);
-                // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "AdminLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";
+                msg += "AdminID=" + String.Format("{0}, ", adminID);
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Action=" + action + ", ";
+                msg += "Status=" + String.Format("{0:D}", result);
+
+                //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+
 
                 return true;
             }
@@ -907,24 +923,22 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
         }
 
-        private Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+        public Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
             Int64 userID, Int32 doorID, String alarmType)
         {
+            String msg;
             try
             {
-                _msg = "[" + terminalType + ":";
-                _msg += terminalID.ToString();
-                _msg += " SN=" + serialNumber + "] ";
-                _msg += "AlarmLog";
-                _msg += "(" + transactionID.ToString() + ") ";
-                _msg += "DateTime:";
-                _msg += logTime.ToString() + ", ";//'at'
-                _msg += "UserID=" + String.Format("{0}, ", userID);
-                _msg += "Door=" + doorID.ToString() + ", ";
-                _msg += "Type=" + alarmType;
-                ///数据备份到C盘
-                FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", _msg);
-                // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "AlarmLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";//'at'
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Door=" + doorID.ToString() + ", ";
+                msg += "Type=" + alarmType;
+                //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
                 return true;
             }
             catch (Exception)
@@ -933,18 +947,22 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
         }
 
-        private void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
+        public void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
         {
-            _msg = "[" + terminalType + ":";
-            _msg += terminalID.ToString();
-            _msg += " SN=" + serialNumber + "] ";
-            _msg += "KeepAlive";
-            _msg += "(" + transactionID.ToString() + ") ";
+            String msg;
+            msg = "[" + terminalType + ":";
+            msg += terminalID.ToString();
+            msg += " SN=" + serialNumber + "] ";
+            msg += "KeepAlive";
+            msg += "(" + transactionID.ToString() + ") ";
             //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
         }
         #endregion
 
-        private void ClosingAttendanceUpSynchronous()
+        /// <summary>
+        /// 关闭异步操作
+        /// </summary>
+        public void ClosingAttendanceUpSynchronous()
         {
             if (m_Running)
             {
@@ -953,7 +971,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
         }
 
-
+        /// <summary>
+        /// 开启异步操作
+        /// </summary>
         public void OpenAttendanceUpSynchronous()
         {
             m_Running = true;

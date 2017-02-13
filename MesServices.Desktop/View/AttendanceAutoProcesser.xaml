@@ -37,12 +37,16 @@
                 <RowDefinition Height="35"/>
                 <RowDefinition />
             </Grid.RowDefinitions>
-             <Button Background="#FF00478D" VerticalAlignment="Center" Width="100" HorizontalAlignment="Center" 
+            <Button Background="#FF00478D" VerticalAlignment="Center" Width="100" HorizontalAlignment="Center" 
                 Content="{Binding Path=AttendanceMachineUpDataText}" 
                 Command="{Binding AutoProcessAttendanceMachineUpDataCmd}" 
-                RenderTransformOrigin="0.95,0.583" Grid.Column="0">
-        </Button>
-            <DataGrid x:Name="dag11" Grid.Row="1" Margin="0,5,10,5"/>
+                RenderTransformOrigin="0.95,0.583" Grid.Column="0"/>
+
+            <DataGrid x:Name="showdag" Grid.Row="1" Margin="0,5,10,5">
+                 <TextBox   x:Name="TextBox"   HorizontalAlignment="Center" 
+                       Text="{Binding Path=MachineUpdateMessage,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" MinHeight=" 100"/>
+             </DataGrid>
+                   
         </Grid>
        
        

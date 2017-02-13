@@ -43,6 +43,7 @@
                 RenderTransformOrigin="0.95,0.583" Grid.Column="0">
         </Button>
             <DataGrid x:Name="dag11" Grid.Row="1" Margin="0,5,10,5"/>
+            <ListBox x:Name="listBox" HorizontalAlignment="Left" Height="310" Margin="10,47,0,0" Grid.Row="1" VerticalAlignment="Top" Width="380"/>
         </Grid>
        
        

@@ -19,7 +19,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     /// 时间日志回调
     /// </summary>
     /// <returns></returns>
-
     internal delegate void PingCallback
          (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID);
     internal delegate Boolean AlarmLogCallback
@@ -140,8 +139,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
         }
     }
-
-
 
     internal class AttendanceUpdateTerminal : IDisposable
     {
@@ -734,26 +731,14 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         }
     }
 
-
-
     public  class AttendanceUpSynchronous
     {
-      
-    
         AttendanceUpdateLogServer m_LogServer;          // Log Server
         Boolean m_Running=false;              // Is Running Monitor Thread?
         ManualResetEvent m_StopEvent;   // stop event
-        public delegate void delegateAddEvent(string msg);
+       
+        public Action<string> ReportUpdataMsg { get; set; }
       
-        private  string _msg;
-        /// <summary>
-        /// 返的信息
-        /// </summary>
-        public string Msg
-        {
-            set {  _msg=value ; }
-            get {  return _msg; }
-        }
         private UInt16 _portNum = 5005;
         /// <summary>
         /// 扫描端口
@@ -911,9 +896,15 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 msg += "UserID=" + String.Format("{0}, ", userID);
                 msg += "Action=" + action + ", ";
                 msg += "Status=" + String.Format("{0:D}", result);
-
+                if (ReportUpdataMsg != null)
+                {
+                    ReportUpdataMsg(msg);
+                }
                 //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
-
+                if (ReportUpdataMsg != null)
+                {
+                    ReportUpdataMsg(msg);
+                }
 
                 return true;
             }
@@ -938,6 +929,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 msg += "UserID=" + String.Format("{0}, ", userID);
                 msg += "Door=" + doorID.ToString() + ", ";
                 msg += "Type=" + alarmType;
+                if (ReportUpdataMsg != null)
+                {
+                    ReportUpdataMsg(msg);
+                }
                 //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
                 return true;
             }
@@ -955,6 +950,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             msg += " SN=" + serialNumber + "] ";
             msg += "KeepAlive";
             msg += "(" + transactionID.ToString() + ") ";
+            if (ReportUpdataMsg != null)
+            {
+                ReportUpdataMsg(msg);
+            }
             //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
         }
         #endregion
@@ -984,13 +983,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
        private void MonitoringThread(object state)
         {
             m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
-
             // Watch stop signal.
             while (m_Running)
             {
                 Thread.Sleep(1000);  // Simulate some lengthy operations.
             }
-
             m_LogServer.Dispose();  // Dispose log server
             m_StopEvent.Set();
             // Watch stop signal.

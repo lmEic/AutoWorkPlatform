@@ -88,15 +88,14 @@ namespace MesServices.Desktop.ViewModel
             }
         }
         #endregion
-        
-        public AttendanceProcesserViewModel()
+
+       public AttendanceProcesserViewModel()
         {
-            this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg=msg=> { this.ProcessMessage = msg; } };
-            this.machineTimer = new ViewModel.HandleAttendanceMachineDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
+
         }
 
         #region command
-        
+
         /// <summary>
         /// 自动处理考勤数据命令
         /// </summary>
@@ -125,7 +124,7 @@ namespace MesServices.Desktop.ViewModel
 
 
         /// <summary>
-        /// 
+        /// 考勤机械上传数据
         /// </summary>
         public RelayCommand AutoProcessAttendanceMachineUpDataCmd
         {
@@ -192,28 +191,28 @@ namespace MesServices.Desktop.ViewModel
         #endregion
     }
 
-
+    /// <summary>
+    /// Machine
+    /// </summary>
     public class HandleAttendanceMachineDataTimer : LeeTimerBase
     {
         #region property 
-        /// <summary>
-        /// 刷卡日期
-        /// </summary>
-        public DateTime SlodCardDate { get; set; }
+       
+     
         AttendanceUpSynchronous attendmanceMachineDataManager = null;
-        TimerTarget ttgt = null;
+       
         //处理进度汇报句柄
         public Action<string> ReportProcessMsg { get; set; }
         #endregion
 
         public HandleAttendanceMachineDataTimer()
         {
-            this.InitTimer(1000);
-            this.attendmanceMachineDataManager = new AttendanceUpSynchronous();
-            this.ttgt = new ViewModel.TimerTarget() { THour = 0, TEndSecond = 13, TMinute = 30, TStartSecond = 10 };
-            
-        }
 
+            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() ;
+            this.attendmanceMachineDataManager.ReportUpdataMsg =this.ReportProcessMsg;
+
+
+        }
         #region method
         protected override void TimerWatcherHandler()
         {

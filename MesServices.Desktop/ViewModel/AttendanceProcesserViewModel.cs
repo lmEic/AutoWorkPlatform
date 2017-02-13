@@ -86,18 +86,21 @@ namespace MesServices.Desktop.ViewModel
                 }
             }
         }
-        string _MachineUpdateMessage;
+        string _machineUpdateMessage = "考勤机上传数据";
+        /// <summary>
+        /// 考勤机上传数据
+        /// </summary>
         public string MachineUpdateMessage
         {
             get
             {
-                return _MachineUpdateMessage;
+                return _machineUpdateMessage;
             }
             set
             {
-                if (_MachineUpdateMessage != value)
+                if (_machineUpdateMessage != value)
                 {
-                    _MachineUpdateMessage = value;
+                    _machineUpdateMessage = value;
                     OnPropertyChanged("MachineUpdateMessage");
                 }
             }

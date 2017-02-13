@@ -208,24 +208,7 @@ namespace MesServices.Desktop.ViewModel
         #endregion
     }
 
-    /// <summary>
-    /// Machine
-    /// </summary>
-    public class HandleAttendanceMachineDataTimer 
-    {
-        #region property 
-       
-     
-        AttendanceUpSynchronous attendmanceMachineDataManager = null;
-       
-        //处理进度汇报句柄
-        public Action<string> ReportProcessMsg { get; set; }
-        #endregion
-
-        #region method
-      
-        #endregion
-    }
+  
     /// <summary>
     /// 目标时间模型
     /// </summary>

@@ -104,7 +104,7 @@
                 <dui:DazzleTabItem.MyEnterBrush>
                     <ImageBrush ImageSource="Skin/Bd/enter.png"/>
                 </dui:DazzleTabItem.MyEnterBrush>
-                <local:ErpSynchronous Width="Auto" Height="Auto" />
+                <!--<local:ErpSynchronous Width="Auto" Height="Auto" />-->
             </dui:DazzleTabItem>
             
             <!--系统配置-->

@@ -15,8 +15,7 @@ namespace MesServices.Desktop.ViewModel
     {
         #region property 
         HandleAttendanceDataTimer timer = null;
-        HandleAttendanceMachineDataTimer machineTimer = null;
-
+        AttendanceUpSynchronous attendmanceMachineDataManager = null;
         DateTime  _SlodCardDate=DateTime.Now;
         /// <summary>
         /// 刷卡日期
@@ -87,10 +86,28 @@ namespace MesServices.Desktop.ViewModel
                 }
             }
         }
+        string _MachineUpdateMessage;
+        public string MachineUpdateMessage
+        {
+            get
+            {
+                return _MachineUpdateMessage;
+            }
+            set
+            {
+                if (_MachineUpdateMessage != value)
+                {
+                    _MachineUpdateMessage = value;
+                    OnPropertyChanged("MachineUpdateMessage");
+                }
+            }
+        }
         #endregion
 
-       public AttendanceProcesserViewModel()
+        public AttendanceProcesserViewModel()
         {
+            this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
+            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msg => { this.MachineUpdateMessage = msg; } };
 
         }
 
@@ -139,12 +156,12 @@ namespace MesServices.Desktop.ViewModel
             if (this.AttendanceMachineUpDataText == "考勤机服务器启动")
             {
                 this.AttendanceMachineUpDataText = "考勤机服务器停止";
-                machineTimer.Start();
+                attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
             }
             else
             {
                 this.AttendanceMachineUpDataText = "考勤机服务器启动";
-                machineTimer.Stop();
+                attendmanceMachineDataManager.ClosingAttendanceUpSynchronous();
 
             }
         }
@@ -194,7 +211,7 @@ namespace MesServices.Desktop.ViewModel
     /// <summary>
     /// Machine
     /// </summary>
-    public class HandleAttendanceMachineDataTimer : LeeTimerBase
+    public class HandleAttendanceMachineDataTimer 
     {
         #region property 
        
@@ -205,24 +222,8 @@ namespace MesServices.Desktop.ViewModel
         public Action<string> ReportProcessMsg { get; set; }
         #endregion
 
-        public HandleAttendanceMachineDataTimer()
-        {
-
-            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() ;
-            this.attendmanceMachineDataManager.ReportUpdataMsg =this.ReportProcessMsg;
-
-
-        }
         #region method
-        protected override void TimerWatcherHandler()
-        {
-           
-                if (ReportProcessMsg != null)
-                    ReportProcessMsg("开始汇总");
-                this.attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
-         
-         
-        }
+      
         #endregion
     }
     /// <summary>

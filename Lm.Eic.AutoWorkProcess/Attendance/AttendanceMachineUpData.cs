@@ -870,7 +870,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                FileOperationExtension.AppendFile(@"C:\Sbx\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
                 //BeginInvoke(new delegateAddEvent(OnAddEvent), _msg);
                 //上专数据到服务器上
-               
+                if (ReportUpdataMsg != null)
+                {
+                    ReportUpdataMsg(msg);
+                }
                 return true;
             }
             catch (Exception)

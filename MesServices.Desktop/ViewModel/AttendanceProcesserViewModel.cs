@@ -146,7 +146,6 @@ namespace MesServices.Desktop.ViewModel
             {
                 this.AttendanceMachineUpDataText = "考勤机服务器启动";
                 machineTimer.Stop();
-
             }
         }
         #endregion

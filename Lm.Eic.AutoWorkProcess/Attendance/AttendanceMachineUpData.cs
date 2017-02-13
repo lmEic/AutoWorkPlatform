@@ -880,9 +880,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     msg += "Photo=Yes ";
                     msg += "(" + Convert.ToString(photo.Length) + "bytes)";
                 }
-               if( Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
+               if(! Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
                 //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
-               FileOperationExtension.AppendFile(@"C:\Sbx\" + logTime.ToDate().ToString()+".txt", msg);
+               FileOperationExtension.AppendFile(@"C:\Sbx\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
                 //BeginInvoke(new delegateAddEvent(OnAddEvent), _msg);
                 //上专数据到服务器上
                

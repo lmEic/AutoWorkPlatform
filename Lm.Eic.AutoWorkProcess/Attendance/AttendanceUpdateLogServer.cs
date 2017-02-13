@@ -732,11 +732,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     }
 
 
-    /// <summary>
-    /// 
-    /// </summary>
+
     public  class AttendanceUpSynchronous
     {
+      
+    
         AttendanceUpdateLogServer m_LogServer;          // Log Server
         Boolean m_Running=false;              // Is Running Monitor Thread?
         ManualResetEvent m_StopEvent;   // stop event
@@ -760,30 +760,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             get { return _portNum; }
         }
         /// <summary>
-        /// 关闭上传数据
-        /// </summary>
-        public  void ClosingAttendanceUpSynchronous()
-        {
-            if (m_Running)
-            {
-                m_Running = false;
-                m_StopEvent.WaitOne();
-            }
-        }
-        /// <summary>
-        /// 打开上传数据
-        /// </summary>
-
-        public void OpenAttendanceUpSynchronous()
-        {
-            m_Running = true;
-            m_StopEvent = new ManualResetEvent(false);
-
-            ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
-        }
-       
-        
-        /// <summary>
         /// 所有用户列表
         /// </summary>
         private  List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
@@ -796,9 +772,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             try
             {
                 AllUserList.Clear();
-                DataTable dt = DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')");
-                if (dt == null || dt.Rows.Count == 0) return;
-                foreach (DataRow dr in dt.Rows)
+                foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
                 {
                     var tem = new AttendFingerPrintDataInTimeModel();
                     if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
@@ -829,22 +803,26 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <param name="anVerifyMode"></param>
         /// <param name="anLogDate"></param>
         /// <param name="astrSerialNo"></param>
-        private  bool  Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo,out string UpMsg)
+        private  void Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
         {
            
             try
             {
-                bool  returnString = false ;
-                if (AllUserList == null || AllUserList.Count == 0)
+                if (AllUserList == null && AllUserList.Count == 0)
                 {
                     RefreshUserList();
                 }
                 var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                if (userInfo != null)
+                if (userInfo == null)
                 {
-                    var tem = new AttendFingerPrintDataInTimeModel();
+                    RefreshUserList();
+                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                }
+                else
+                {
+                    var tem = new AttendFingerPrintDataInTimeModel(); 
                     tem.WorkerId = userInfo.WorkerId;
-                    tem.WorkerName = userInfo.WorkerName;
+                    tem.WorkerName = userInfo.WorkerName ;
                     tem.CardID = userInfo.CardID;
                     if (anVerifyMode == "FP")
                         tem.CardType = "指纹";
@@ -854,28 +832,14 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                         tem.CardType = "卡片";
                     tem.SlodCardTime = anLogDate;
                     tem.SlodCardDate = anLogDate.Date;
-                    string strSql = string.Format(" INSERT INTO Attendance_FingerPrintDataInTime  VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{4}')",
-                                                   tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
-                    int i = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
-                    if (i > 0)
-                    {
-                        UpMsg = tem.WorkerName + "数据据上传成功";
-                        returnString = true;
-                    }
-                    else UpMsg = tem.WorkerName + "数据据上传失败";
+                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.CardID}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
+                   int  i= DbHelper.Hrm.ExecuteNonQuery(strSql.ToString());
+                  
                 }
-                else
-                {
-                    RefreshUserList();
-                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                    UpMsg = "没有此人" + UserID.ToString("000000") + "工号";
-                }
-                return returnString;
             }
             catch (Exception )
             {
-                UpMsg = "数据据上传失败";
-                return false ;
+                
             }
         }
         #region  处理返回的信息
@@ -907,9 +871,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", _msg);
                 // BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
                 //上专数据到服务器上
-                string upmesg = string.Empty;
-                bool  isUpdata= Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber, out upmesg);
-                if (!isUpdata) FileOperationExtension.AppendFile(@"C:\sxtb\" + logTime.ToDate() + ".txt", upmesg); 
+                Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber);
                 return true;
             }
             catch (Exception)
@@ -981,7 +943,24 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
         }
         #endregion
-       
+
+        private void ClosingAttendanceUpSynchronous()
+        {
+            if (m_Running)
+            {
+                m_Running = false;
+                m_StopEvent.WaitOne();
+            }
+        }
+
+
+        public void OpenAttendanceUpSynchronous()
+        {
+            m_Running = true;
+            m_StopEvent = new ManualResetEvent(false);
+
+            ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
+        }
        private void MonitoringThread(object state)
         {
             m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.

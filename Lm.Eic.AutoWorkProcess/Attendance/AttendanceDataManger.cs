@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 using System.Threading.Tasks;
 using Lm.Eic.Uti.Common.YleeDbHandler;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
+using System.IO;
 namespace Lm.Eic.AutoWorkProcess.Attendance
 {
     /// <summary>
@@ -226,6 +228,45 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             };
             return mdl;
         }
+
+
+        #region configuration
+        /// <summary>
+        /// 初始化配置文件
+        /// </summary>
+        public void InitConfigurationFile()
+        {
+           var ttgt = new TimerTarget() { THour = 0, TEndSecond = 13, TMinute = 30, TStartSecond = 10 };
+            string filePath = @"C:\AutoProcessWorker\Configuration\";
+            if (!Directory.Exists(filePath)) Directory.CreateDirectory(filePath);
+            string fileName = filePath + "TimeSetCongig.xml";
+            XElement root = new XElement("AutoPrecessWork",
+               new XAttribute(XNamespace.Xmlns + "xsi","lm"),
+               new XAttribute(XNamespace.Xmlns + "eic", "eic"),
+               new XAttribute("lmschemaLocation", "http://www.ieee.org/ATML/2007/TestResults TestResults.xsd"));
+            XElement timeSet = new XElement("TimeSetConfig", new XElement("TimeSetter", new XAttribute("THour", ttgt.THour)
+                ,new XAttribute("TMinute",ttgt.TMinute),new XAttribute("TStartSecond",ttgt.TStartSecond),new XAttribute("TEndSecond",ttgt.TEndSecond)));
+
+            root.Add(timeSet);
+            XDocument doc = new XDocument(new XDeclaration("1.0", "gb2312", ""), root);
+            doc.Save(fileName, SaveOptions.DisableFormatting);
+        }
+        //载入时间参数配置信息
+        public TimerTarget LoadTimerSetConfigInfo()
+        {
+            string fileName = @"C:\AutoProcessWorker\Configuration\TimeSetCongig.xml";
+            XDocument data = XDocument.Load(fileName);
+            XElement root = data.Root;
+            XElement timeSet = root.Descendants().FirstOrDefault().Descendants().FirstOrDefault();
+            TimerTarget tt = new TimerTarget() {
+                THour = timeSet.Attribute("THour").Value.ToInt(),
+                TMinute= timeSet.Attribute("TMinute").Value.ToInt(),
+                TStartSecond = timeSet.Attribute("TStartSecond").Value.ToInt(),
+                TEndSecond = timeSet.Attribute("TEndSecond").Value.ToInt(),
+            };
+            return tt;
+        }
+        #endregion
     }
     /// <summary>
     /// 考勤指纹数据处理器
@@ -375,5 +416,16 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             if (datas != null && datas.Count > 0) return datas.FirstOrDefault();
             return null;
         }
+    }
+
+    /// <summary>
+    /// 目标时间模型
+    /// </summary>
+    public class TimerTarget
+    {
+        public int THour { get; set; }
+        public int TMinute { get; set; }
+        public int TStartSecond { get; set; }
+        public int TEndSecond { get; set; }
     }
 }

@@ -808,17 +808,26 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
                     if (userInfo != null)
                     {
-                        var tem = new AttendFingerPrintDataInTimeModel();
+                    var tem = new AttendFingerPrintDataInTimeModel();
                         tem.WorkerId = userInfo.WorkerId;
                         tem.WorkerName = userInfo.WorkerName;
                         tem.CardID = userInfo.CardID;
-                        if (anVerifyMode == "FP")
+                    switch(anVerifyMode)
+                    {
+                        case "FP":
                             tem.CardType = "指纹";
-                        else if (anVerifyMode == "Face")
-                            tem.CardType = "脸部";
-                        else if (anVerifyMode == "")
+                            break;
+                        case "脸部":
+                            tem.CardType = "指纹";
+                            break;
+                        case "":
                             tem.CardType = "卡片";
-                        tem.SlodCardTime = anLogDate;
+                            break;
+                        default:
+                            tem.CardType = "其它";
+                            break;
+                    }
+                    tem.SlodCardTime = anLogDate;
                         tem.SlodCardDate = anLogDate.Date;
                         string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
                             tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);

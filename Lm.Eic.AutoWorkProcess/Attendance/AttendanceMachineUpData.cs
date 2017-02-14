@@ -832,7 +832,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                         tem.SlodCardDate = anLogDate.Date;
                         string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
                             tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
-                        returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) > 1 ? true : false;
+                        returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) >= 1 ? true : false;
                     }
                     else
                     {
@@ -877,7 +877,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     }
                     if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
                         //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
-                        FileOperationExtension.AppendFile(@"C:\Sbx\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
+                        FileOperationExtension.AppendFile(@"C:\AutoProcessWorker\Logo\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
                     RetrunShowInfo(msg);
                     return true;
                 }

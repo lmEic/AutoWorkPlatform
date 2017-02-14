@@ -875,6 +875,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     ReportUpdataMsg(msg);
                 }
                 return true;
+                
             }
             catch (Exception)
             {

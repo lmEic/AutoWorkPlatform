@@ -111,7 +111,6 @@ namespace MesServices.Desktop.ViewModel
         {
             this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msg => { this.MachineUpdateMessage = msg; } };
-
         }
 
         #region command
@@ -210,8 +209,7 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
     }
-
-  
+    
     /// <summary>
     /// 目标时间模型
     /// </summary>

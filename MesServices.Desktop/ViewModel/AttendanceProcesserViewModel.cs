@@ -111,7 +111,6 @@ namespace MesServices.Desktop.ViewModel
         {
             this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msg => { this.MachineUpdateMessage = msg; } };
-
         }
 
         #region command
@@ -191,7 +190,7 @@ namespace MesServices.Desktop.ViewModel
         {
             this.InitTimer(1000);
             this.attendmanceDataManager = new AttendanceDataManger();
-            this.ttgt = new ViewModel.TimerTarget() { THour = 0, TEndSecond = 13, TMinute = 30, TStartSecond = 10 };
+            this.ttgt = this.attendmanceDataManager.LoadTimerSetConfigInfo();
         }
 
         #region method
@@ -210,16 +209,6 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
     }
-
+    
   
-    /// <summary>
-    /// 目标时间模型
-    /// </summary>
-    public class TimerTarget
-    {
-        public int THour { get; set; }
-        public int TMinute { get; set; }
-        public int TStartSecond { get; set; }
-        public int TEndSecond { get; set; }
-    }
 }

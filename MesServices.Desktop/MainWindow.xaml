@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dui="clr-namespace:WPF.DazzleUI2.Controls;assembly=WPF.DazzleUI2"
         xmlns:local="clr-namespace:MesServices.Desktop" x:Class="MesServices.Desktop.MainWindow"
-        Title="MainWindow" Background="#FF99B4D1" >
+        Title="MainWindow" Background="#FF99B4D1" Icon="bitbug_favicon.ico" >
 
     <Grid Background="#FF386FB2">
         <Grid.RowDefinitions>

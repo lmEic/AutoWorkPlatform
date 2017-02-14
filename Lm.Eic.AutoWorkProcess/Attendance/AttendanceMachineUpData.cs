@@ -736,17 +736,18 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             AttendanceUpdateLogServer m_LogServer;          // Log Server
             Boolean m_Running = false;              // Is Running Monitor Thread
             ManualResetEvent m_StopEvent;   // stop event
-
-            public Action<string> ReportUpdataMsg { get; set; }
-            private UInt16 _portNum = 5005;
+        
+        public Action<List<string>> ReportUpdataMsg { get; set; }
+   
 
             List<MsgCell> msgList = new List<MsgCell>();
             int rowId = 0;
-            StringBuilder msgSb = new StringBuilder();
-            /// <summary>
-            /// 扫描端口
-            /// </summary>
-            public UInt16 PortNum
+           List<string> msgSblist = new List<string>();
+        /// <summary>
+        /// 扫描端口
+        /// </summary>
+        private UInt16 _portNum = 5005;
+        public UInt16 PortNum
             {
                 set { _portNum = value; }
                 get { return _portNum; }
@@ -952,18 +953,18 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 {
                     msgList.Clear();
                     rowId = 0;
-                    msgSb.Clear();
+                    msgSblist.Clear();
                 }
                 rowId += 1;
                 msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });
 
-                msgList = msgList.OrderByDescending(o => o.RowId).ToList();
-                msgList.ForEach(m => { msgSb.AppendLine(m.Msg); });
+               msgList = msgList.OrderByDescending(o => o.RowId).ToList();
+               msgList.ForEach(m => { msgSblist.Add(m.Msg); });
 
-                if (ReportUpdataMsg != null)
-                {
-                    ReportUpdataMsg(msgSb.ToString());
-                }
+            if (ReportUpdataMsg!=null)
+            {
+                ReportUpdataMsg(msgSblist);
+            }
             }
 
             #endregion

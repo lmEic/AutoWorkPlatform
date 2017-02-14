@@ -86,22 +86,24 @@ namespace MesServices.Desktop.ViewModel
                 }
             }
         }
-        string _machineUpdateMessage = "考勤机上传数据";
+     
+
+        List<string> _machineUpdateMsg = new List<string>() { "考勤机上传数据" };
         /// <summary>
         /// 考勤机上传数据
         /// </summary>
-        public string MachineUpdateMessage
+        public List<string> MachineUpdateMsg
         {
             get
             {
-                return _machineUpdateMessage;
+                return _machineUpdateMsg;
             }
             set
             {
-                if (_machineUpdateMessage != value)
+                if (_machineUpdateMsg != value)
                 {
-                    _machineUpdateMessage = value;
-                    OnPropertyChanged("MachineUpdateMessage");
+                    _machineUpdateMsg = value;
+                    OnPropertyChanged("MachineUpdateMsg");
                 }
             }
         }
@@ -110,7 +112,9 @@ namespace MesServices.Desktop.ViewModel
         public AttendanceProcesserViewModel()
         {
             this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
-            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msg => { this.MachineUpdateMessage = msg; } };
+           
+           
+            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msgList => { this.MachineUpdateMsg = msgList; } };
         }
 
         #region command

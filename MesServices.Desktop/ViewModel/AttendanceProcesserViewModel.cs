@@ -88,7 +88,7 @@ namespace MesServices.Desktop.ViewModel
         }
      
 
-        List<string> _machineUpdateMsg = new List<string>();
+        List<string> _machineUpdateMsg = new List<string>() {"上传数据"};
         /// <summary>
         /// 考勤机上传数据
         /// </summary>
@@ -113,7 +113,6 @@ namespace MesServices.Desktop.ViewModel
         {
             this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msgList => { this.MachineUpdateMsg = msgList; } };
-            _machineUpdateMsg.Add("上传数据");
         }
 
         #region command

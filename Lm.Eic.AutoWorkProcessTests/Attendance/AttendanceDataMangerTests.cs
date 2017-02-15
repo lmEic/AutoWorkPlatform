@@ -15,7 +15,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Tests
         public void AutoProcessAttendanceDatasTest()
         {
             AttendanceDataManger am = new AttendanceDataManger();
-            am.AutoProcessAttendanceDatas(DateTime.Now.AddDays(-1));
+            //DateTime dt = new DateTime(2017, 2, 2, 0, 0, 0);
+            //am.AutoProcessAttendanceDatas(dt);
+            am.InitDatas();
             Assert.Fail();
         }
 

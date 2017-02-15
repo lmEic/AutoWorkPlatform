@@ -837,9 +837,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     }
                     tem.SlodCardTime = anLogDate;
                     tem.SlodCardDate = anLogDate.Date;
-                    string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
-                        tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
-                    returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) >= 1 ? true : false;
+                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.CardID}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
+                    returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) > 0 ? true : false;
+                    //string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
+                    //    tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
+                    //returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) >= 1 ? true : false;
                 }
                 return returnBool;
             }

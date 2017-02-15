@@ -818,8 +818,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                         case "FP":
                             tem.CardType = "指纹";
                             break;
-                        case "脸部":
-                            tem.CardType = "指纹";
+                        case "Face":
+                            tem.CardType = "脸部";
                             break;
                         case "":
                             tem.CardType = "卡片";

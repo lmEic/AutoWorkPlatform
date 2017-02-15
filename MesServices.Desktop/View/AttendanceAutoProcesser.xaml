@@ -44,8 +44,7 @@
                 RenderTransformOrigin="0.95,0.583" Grid.Column="0"/>
 
             <DataGrid x:Name="showdag" Grid.Row="1" Margin="0,5,10,5">
-                
-             </DataGrid>
+            </DataGrid>
                  <ListBox   x:Name="TextBox"   HorizontalAlignment="Stretch" Grid.Row="2" VerticalAlignment="Top" Margin="0,5,10,5"
                        ItemsSource="{Binding Path=MachineUpdateMsg,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" MinHeight=" 510" />   
         </Grid>

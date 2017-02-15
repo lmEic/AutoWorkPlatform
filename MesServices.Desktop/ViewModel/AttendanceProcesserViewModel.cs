@@ -88,7 +88,7 @@ namespace MesServices.Desktop.ViewModel
         }
      
 
-        List<string> _machineUpdateMsg = new List<string>() { "考勤机上传数据" };
+        List<string> _machineUpdateMsg = new List<string>() {"上传数据"};
         /// <summary>
         /// 考勤机上传数据
         /// </summary>
@@ -112,8 +112,6 @@ namespace MesServices.Desktop.ViewModel
         public AttendanceProcesserViewModel()
         {
             this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
-           
-           
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msgList => { this.MachineUpdateMsg = msgList; } };
         }
 
@@ -144,8 +142,6 @@ namespace MesServices.Desktop.ViewModel
 
             }
         }
-
-
         /// <summary>
         /// 考勤机械上传数据
         /// </summary>
@@ -156,6 +152,8 @@ namespace MesServices.Desktop.ViewModel
                 return new RelayCommand(ProcessAttendanceMachineData);
             }
         }
+      
+
         private void ProcessAttendanceMachineData(object o)
         {
            
@@ -171,6 +169,7 @@ namespace MesServices.Desktop.ViewModel
 
             }
         }
+      
         #endregion
 
     }

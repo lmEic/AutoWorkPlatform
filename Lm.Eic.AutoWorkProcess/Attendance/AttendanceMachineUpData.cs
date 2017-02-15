@@ -734,7 +734,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     public class AttendanceUpSynchronous 
     {
             AttendanceUpdateLogServer m_LogServer;          // Log Server
-            Boolean m_Running = false;              // Is Running Monitor Thread
+            Boolean m_Running ;              // Is Running Monitor Thread
             ManualResetEvent m_StopEvent;   // stop event
         
         public Action<List<string>> ReportUpdataMsg { get; set; }
@@ -799,21 +799,25 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
             {
 
-                try
+            try
+            {
+                bool returnBool = false;
+                if (AllUserList == null && AllUserList.Count == 0)
+                { RefreshUserList(); }
+                var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+
+                if (userInfo == null)
                 {
-                    bool returnBool = false;
-                    if (AllUserList == null && AllUserList.Count == 0)
-                    {
-                        RefreshUserList();
-                    }
-                    var userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                    if (userInfo != null)
-                    {
+                    RefreshUserList();
+                    userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
+                }
+                else
+                {
                     var tem = new AttendFingerPrintDataInTimeModel();
-                        tem.WorkerId = userInfo.WorkerId;
-                        tem.WorkerName = userInfo.WorkerName;
-                        tem.CardID = userInfo.CardID;
-                    switch(anVerifyMode)
+                    tem.WorkerId = userInfo.WorkerId;
+                    tem.WorkerName = userInfo.WorkerName;
+                    tem.CardID = userInfo.CardID;
+                    switch (anVerifyMode)
                     {
                         case "FP":
                             tem.CardType = "指纹";
@@ -832,23 +836,18 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                             break;
                     }
                     tem.SlodCardTime = anLogDate;
-                        tem.SlodCardDate = anLogDate.Date;
-                        string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
-                            tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
-                        returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) >= 1 ? true : false;
-                    }
-                    else
-                    {
-                        RefreshUserList();
-                        userInfo = AllUserList.FirstOrDefault(m => m.WorkerId == UserID.ToString("000000"));
-                    }
-                    return returnBool;
+                    tem.SlodCardDate = anLogDate.Date;
+                    string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
+                        tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
+                    returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) >= 1 ? true : false;
                 }
-                catch (Exception)
-                {
-                    return false;
+                return returnBool;
+            }
+            catch (Exception)
+            {
+                return false;
 
-                }
+            }
             }
             #endregion
             #region  处理返回的信息
@@ -970,8 +969,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
             }
 
-            #endregion
+        #endregion
 
+        public AttendanceUpSynchronous()
+        {
+            m_Running = false;
+        }
             /// <summary>
             /// 关闭异步操作
             /// </summary>
@@ -1000,7 +1003,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                                                                                                                    // Watch stop signal.
                 while (m_Running)
                 {
-                    Thread.Sleep(1000);  // Simulate some lengthy operations.
+                    Thread.Sleep(100);  // Simulate some lengthy operations.
                 }
                 m_LogServer.Dispose();  // Dispose log server
                 m_StopEvent.Set();

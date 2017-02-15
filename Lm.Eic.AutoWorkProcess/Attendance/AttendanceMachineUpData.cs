@@ -824,6 +824,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                         case "":
                             tem.CardType = "卡片";
                             break;
+                        case "Card":
+                            tem.CardType = "卡片";
+                            break;
                         default:
                             tem.CardType = "其它";
                             break;

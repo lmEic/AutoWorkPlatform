@@ -5,6 +5,7 @@ using System.Text;
 using Lm.Eic.AutoWorkProcess.Attendance;
 using Lm.Eic.Uti.Common.YleeTimer;
 using Lm.Eic.Uti.Common.YleeMessage.Windows;
+using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 
 namespace MesServices.Desktop.ViewModel
 {
@@ -111,7 +112,10 @@ namespace MesServices.Desktop.ViewModel
 
         public AttendanceProcesserViewModel()
         {
-            this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => { this.ProcessMessage = msg; } };
+            this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => {
+                this.SlodCardDate = DateTime.Now.ToDate();
+                this.ProcessMessage = msg;
+            } };
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msgList => { this.MachineUpdateMsg = msgList; } };
         }
 
@@ -199,15 +203,16 @@ namespace MesServices.Desktop.ViewModel
         #region method
         protected override void TimerWatcherHandler()
         {
+            ReportProcessMsg("");
             DateTime d = DateTime.Now;
             int m = d.Minute, h = d.Hour, s = d.Second;
             if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond)
             {
                 if (ReportProcessMsg != null)
-                    ReportProcessMsg("开始汇总");
+                    ReportProcessMsg("开始汇总...");
                 this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
                 if (ReportProcessMsg != null)
-                    ReportProcessMsg("汇总结束");
+                    ReportProcessMsg("汇总结束!");
             }
         }
         #endregion

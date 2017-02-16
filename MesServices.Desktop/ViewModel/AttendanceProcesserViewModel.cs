@@ -217,6 +217,4 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
     }
-    
-  
 }

@@ -51,7 +51,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 {
                     ctm = AttendSlodFingerDataCurrentMonthHandler.GetClassType(workerId, slotCardDate);
                     depm = departments.FirstOrDefault(d => d.DataNodeName == worker.Department);
-                    worker.ClassType = ctm == null ? worker.ClassType : ctm.ClassType;
+                    worker.ClassType = ctm == null ? "白班" : ctm.ClassType;
                     worker.Department = depm == null ? worker.Department : depm.DataNodeText;
 
                     int len = attendDataPerWorker.Count;
@@ -274,7 +274,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         public void InitDatas()
         {
-            for (int day = 2; day < 15; day++)
+            for (int day = 1; day <=15; day++)
             {
                 DateTime dt = new DateTime(2017, 2, day, 0, 0, 0);
                 var datas = this.LoadDatas(dt);

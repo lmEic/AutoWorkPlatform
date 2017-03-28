@@ -127,7 +127,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <summary>
         /// 合并考勤时间
         /// </summary>
-        /// <param name="record"></param>
         /// <param name="currentAttendData"></param>
         /// <param name="slodCardTime"></param>
         /// <returns></returns>
@@ -190,7 +189,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <summary>
         /// 初次插入数据
         /// </summary>
-        /// <param name="record"></param>
         /// <param name="attendTimeMdl"></param>
         /// <param name="worker"></param>
         /// <param name="slodCardTime"></param>
@@ -326,7 +324,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <summary>
         /// 按日期载入当月考勤数据
         /// </summary>
-        /// <param name="slotCardDate"></param>
+        /// <param name="attendanceDate"></param>
         /// <returns></returns>
         private int DeleteAttendanceDatas(DateTime attendanceDate)
         {
@@ -356,8 +354,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <summary>
         /// 删除数据
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <param name="entities"></param>
+        /// <param name="targetRecord"></param>
         internal static void BackupData(List<AttendFingerPrintDataInTimeModel> entities, int targetRecord)
         {
             int record = 0;
@@ -397,9 +395,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         internal static int StoreNoIdentityWorkerInfo(AttendFingerPrintDataInTimeModel entity)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("INSERT INTO Archives_ForgetInputWorkerInfo  (WorkerId,WorkerName)");
+            sb.Append("INSERT INTO Archives_ForgetInputWorkerInfo  (WorkerId,WorkerName,OpDate,OpTime)");
             sb.AppendFormat(" values ('{0}',", entity.WorkerId);
             sb.AppendFormat("'{0}')", entity.WorkerName);
+            sb.AppendFormat("'{0}')", DateTime.Now.ToDate());
+            sb.AppendFormat("'{0}')", DateTime.Now.ToDateTime());
             return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
         }
     }
@@ -411,7 +411,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <summary>
         /// 按日期载入当月考勤数据
         /// </summary>
-        /// <param name="slotCardDate"></param>
+        /// <param name="attendanceDate"></param>
         /// <returns></returns>
         internal static List<AttendSlodFingerDataCurrentMonthModel> LoadAttendanceDatas(DateTime attendanceDate)
         {
@@ -425,7 +425,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// </summary>
         /// <param name="slodCardTime"></param>
         /// <param name="slodCardTime2"></param>
-        /// <param name="id_Key"></param>
         /// <returns></returns>
         internal static int UpdateSlotCardTime2(string slodCardTime,string slodCardTime2,string workerId,DateTime attendanceDate)
         {
@@ -438,7 +437,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// </summary>
         /// <param name="slodCardTime"></param>
         /// <param name="slodCardTime1"></param>
-        /// <param name="id_Key"></param>
         /// <returns></returns>
         internal static int UpdateSlotCardTime1(string slodCardTime, string slodCardTime1,string workerId, DateTime attendanceDate)
         {

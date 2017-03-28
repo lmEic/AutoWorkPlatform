@@ -752,7 +752,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 set { _portNum = value; }
                 get { return _portNum; }
             }
-            #region 数据库入存
+        #region 数据库入存
             /// <summary>
             /// 所有用户列表
             /// </summary>
@@ -817,6 +817,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     tem.WorkerId = userInfo.WorkerId;
                     tem.WorkerName = userInfo.WorkerName;
                     tem.CardID = userInfo.CardID;
+                    tem.MachineId = astrSerialNo;
                     switch (anVerifyMode)
                     {
                         case "FP":
@@ -837,7 +838,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     }
                     tem.SlodCardTime = anLogDate;
                     tem.SlodCardDate = anLogDate.Date;
-                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.CardID}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
+                    string strSql = $"INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{tem.WorkerId}', '{tem.WorkerName}', '{tem.MachineId}', '{tem.CardType}', '{tem.SlodCardTime}', '{tem.SlodCardDate}')";
                     returnBool = DbHelper.Hrm.ExecuteNonQuery(strSql.ToString()) > 0 ? true : false;
                     //string strSql = string.Format("INSERT INTO Attendance_FingerPrintDataInTime VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')",
                     //    tem.WorkerId, tem.WorkerName, tem.CardID, tem.CardType, tem.SlodCardTime, tem.SlodCardDate);
@@ -852,7 +853,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
             }
             #endregion
-            #region  处理返回的信息
+           
+        #region  处理返回的信息
 
             public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
                 Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)

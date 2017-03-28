@@ -6,6 +6,7 @@ using Lm.Eic.AutoWorkProcess.Attendance;
 using Lm.Eic.Uti.Common.YleeTimer;
 using Lm.Eic.Uti.Common.YleeMessage.Windows;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
+using System.Threading;
 
 namespace MesServices.Desktop.ViewModel
 {
@@ -110,13 +111,19 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
 
+        
+
         public AttendanceProcesserViewModel()
         {
             this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => {
                 this.SlodCardDate = DateTime.Now.ToDate();
                 this.ProcessMessage = msg;
             } };
-            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msgList => { this.MachineUpdateMsg = msgList; } };
+            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() {
+           
+                ReportUpdataMsg = msgList => {
+                this.MachineUpdateMsg = msgList;
+            } };
         }
 
         #region command

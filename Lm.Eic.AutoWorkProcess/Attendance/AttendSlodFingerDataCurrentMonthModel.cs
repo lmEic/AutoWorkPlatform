@@ -205,6 +205,16 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             get { return _cardid; }
         }
 
+        private string _machineid;
+
+        /// <summary>
+        ///读取机器编号
+        /// </summary>
+        public string MachineId
+        {
+            set { _machineid = value; }
+            get { return _machineid; }
+        }
         private string _cardtype;
 
         /// <summary>

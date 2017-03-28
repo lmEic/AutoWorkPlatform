@@ -112,10 +112,8 @@ namespace MesServices.Desktop.ViewModel
 
         public AttendanceProcesserViewModel()
         {
-            this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => {
-                this.SlodCardDate = DateTime.Now.ToDate();
-                this.ProcessMessage = msg;
-            } };
+            this.timer = new ViewModel.HandleAttendanceDataTimer();
+            this.timer.ReportProcessMsg = msg => { this.SlodCardDate = this.timer.SlodCardDate; this.ProcessMessage= msg; };
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous() { ReportUpdataMsg = msgList => { this.MachineUpdateMsg = msgList; } };
         }
 
@@ -205,6 +203,7 @@ namespace MesServices.Desktop.ViewModel
         {
             ReportProcessMsg("");
             DateTime d = DateTime.Now;
+            this.SlodCardDate = d;
             int m = d.Minute, h = d.Hour, s = d.Second;
             if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond)
             {
@@ -217,6 +216,5 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
     }
-    
   
 }

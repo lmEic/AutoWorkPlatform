@@ -14,10 +14,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Tests
         [TestMethod()]
         public void AutoProcessAttendanceDatasTest()
         {
-            AttendanceDataManger am = new AttendanceDataManger();
-            //DateTime dt = new DateTime(2017, 2, 2, 0, 0, 0);
-            //am.AutoProcessAttendanceDatas(dt);
-            am.InitDatas();
+            InitAttendanceDataProcesser am = new InitAttendanceDataProcesser();
+            InitArchivesDataProcesser d = new InitArchivesDataProcesser();
+            //d.InitPostDatas();
+            //am.InitDatas();
+            d.UpdateLeaveDate();
             Assert.Fail();
         }
 

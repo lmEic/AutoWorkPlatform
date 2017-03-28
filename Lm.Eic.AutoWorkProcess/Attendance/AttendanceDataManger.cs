@@ -43,6 +43,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 record = 0;
                 //获取每个人的信息
                 worker = workers.FirstOrDefault(w => w.WorkerId == workerId);
+                if (worker == null)
+                {
+                    var m = this.GetWorkerChangeInfo(workerId);
+                    if (m != null)
+                        worker = workers.FirstOrDefault(w => w.WorkerId == m.NewWorkerId);
+                }
                 //从实时考勤数据表中获取该员工的考勤数据
                 attendDataPerWorker = fingerPrintDatas.FindAll(f => f.WorkerId == workerId).OrderBy(o => o.SlodCardTime).ToList();
                 //从考勤中获取该员工的考勤数据
@@ -94,6 +100,13 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             string sql = "Select IdentityID, WorkerId,Name,Post, PostNature,Organizetion, Department,ClassType,PersonalPicture from Archives_EmployeeIdentityInfo ";
             return DbHelper.Hrm.LoadEntities<ArWorkerInfo>(sql);
+        }
+        private WorkerChangeModel GetWorkerChangeInfo(string oldWorkerId)
+        {
+            string sql =string.Format("Select Top 1 OldWorkerId, WorkerName, NewWorkerId from Archives_WorkerIdChanged where OldWorkerId='{0}'",oldWorkerId);
+            var datas= DbHelper.Hrm.LoadEntities<WorkerChangeModel>(sql);
+            if (datas != null && datas.Count > 0) return datas[0];
+            return null;
         }
         /// <summary>
         /// 重新排序连接的时间字符串
@@ -514,5 +527,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// 文本信息
         /// </summary>
         public string DataNodeText { get; set; }
+    }
+
+    public class WorkerChangeModel
+    {
+        public string OldWorkerId { get; set; }
+
+        public string NewWorkerId { get; set; }
     }
 }

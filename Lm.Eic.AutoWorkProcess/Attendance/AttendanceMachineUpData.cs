@@ -38,7 +38,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         Int32 JobCode,
         String Antipass,
         Byte[] Photo);
-   internal class AttendanceUpdateLogServer : IDisposable
+    internal class AttendanceUpdateLogServer : IDisposable
     {
         public Boolean m_Disposed;
         public UInt16 m_PortNo;
@@ -731,73 +731,73 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         }
 
     }
-    public class AttendanceUpSynchronous 
+    public class AttendanceUpSynchronous
     {
-            AttendanceUpdateLogServer m_LogServer;          // Log Server
-            Boolean m_Running ;              // Is Running Monitor Thread
-            ManualResetEvent m_StopEvent;   // stop event
-        
-        public Action<List<string>> ReportUpdataMsg { get; set; }
-   
+        AttendanceUpdateLogServer m_LogServer;          // Log Server
+        Boolean m_Running;              // Is Running Monitor Thread
+        ManualResetEvent m_StopEvent;   // stop event
 
-            List<MsgCell> msgList = new List<MsgCell>();
-            int rowId = 0;
-           List<string> msgSblist = new List<string>();
+        public Action<List<string>> ReportUpdataMsg { get; set; }
+
+
+        List<MsgCell> msgList = new List<MsgCell>();
+        int rowId = 0;
+        List<string> msgSblist = new List<string>();
         /// <summary>
         /// 扫描端口
         /// </summary>
         private UInt16 _portNum = 5005;
         public UInt16 PortNum
-            {
-                set { _portNum = value; }
-                get { return _portNum; }
-            }
+        {
+            set { _portNum = value; }
+            get { return _portNum; }
+        }
         #region 数据库入存
-            /// <summary>
-            /// 所有用户列表
-            /// </summary>
-            private List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
-            /// <summary>
-            /// 刷新所有用户列表
-            /// </summary>
-            private void RefreshUserList()
+        /// <summary>
+        /// 所有用户列表
+        /// </summary>
+        private List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
+        /// <summary>
+        /// 刷新所有用户列表
+        /// </summary>
+        private void RefreshUserList()
+        {
+            try
             {
-                try
+                AllUserList.Clear();
+                foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
                 {
-                    AllUserList.Clear();
-                    foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
+                    var tem = new AttendFingerPrintDataInTimeModel();
+                    if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
                     {
-                        var tem = new AttendFingerPrintDataInTimeModel();
-                        if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
-                        {
-                            tem.WorkerId = dr["WorkerId"].ToString().Trim();
-                        }
-
-                        if (dr["Name"] != null && dr["Name"].ToString() != "")
-                        {
-                            tem.WorkerName = dr["Name"].ToString().Trim();
-                        }
-                        if (dr["CardID"] != null && dr["CardID"].ToString() != "")
-                        {
-                            tem.CardID = dr["CardID"].ToString().Trim();
-                        }
-                        AllUserList.Add(tem);
+                        tem.WorkerId = dr["WorkerId"].ToString().Trim();
                     }
-                }
-                catch
-                {
-                    //使用邮件发送错误信息
+
+                    if (dr["Name"] != null && dr["Name"].ToString() != "")
+                    {
+                        tem.WorkerName = dr["Name"].ToString().Trim();
+                    }
+                    if (dr["CardID"] != null && dr["CardID"].ToString() != "")
+                    {
+                        tem.CardID = dr["CardID"].ToString().Trim();
+                    }
+                    AllUserList.Add(tem);
                 }
             }
-            /// <summary>
-            /// 存入到数据数库内
-            /// </summary>
-            /// <param name="UserID"></param>
-            /// <param name="anVerifyMode"></param>
-            /// <param name="anLogDate"></param>
-            /// <param name="astrSerialNo"></param>
-            private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+            catch
             {
+                //使用邮件发送错误信息
+            }
+        }
+        /// <summary>
+        /// 存入到数据数库内
+        /// </summary>
+        /// <param name="UserID"></param>
+        /// <param name="anVerifyMode"></param>
+        /// <param name="anLogDate"></param>
+        /// <param name="astrSerialNo"></param>
+        private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        {
 
             try
             {
@@ -817,6 +817,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     tem.WorkerId = userInfo.WorkerId;
                     tem.WorkerName = userInfo.WorkerName;
                     tem.CardID = userInfo.CardID;
+                    if (astrSerialNo == null) tem.MachineId = string.Empty;
                     tem.MachineId = astrSerialNo;
                     switch (anVerifyMode)
                     {
@@ -851,127 +852,127 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 return false;
 
             }
-            }
-            #endregion
-           
+        }
+        #endregion
+
         #region  处理返回的信息
 
-            public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
-                Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
+        public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
+        {
+            String msg;
+            try
             {
-                String msg;
-                try
-                {
-                    msg = "[" + terminalType + ":";
-                    msg += terminalID.ToString();
-                    msg += " SN=" + serialNumber + "] ";
-                    msg += "TimeLog";
-                    msg += "(" + transactionID.ToString() + ") ";
-                    msg += logTime.ToString() + ", ";
-                    msg += "UserID=" + String.Format("{0}, ", userID);
-                    msg += "Door=" + doorID.ToString() + ", ";
-                    msg += "AttendStat=" + attendanceStatus + ", ";
-                    msg += "VMode=" + verifyMode + ", ";
-                    msg += "JobCode=" + jobCode.ToString() + ", ";
-                    msg += "Antipass=" + antipass + ", ";
-                    if (photo == null)
-                        msg += "Photo=No";
-                    else
-                    {
-                        msg += "Photo=Yes ";
-                        msg += "(" + Convert.ToString(photo.Length) + "bytes)";
-                    }
-                    if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
-                        //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
-                        FileOperationExtension.AppendFile(@"C:\AutoProcessWorker\Logo\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
-                    RetrunShowInfo(msg);
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-
-            public Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
-                Int64 adminID, Int64 userID, String action, Int32 result)
-            {
-                String msg;
-
-                try
-                {
-                    msg = "[" + terminalType + ":";
-                    msg += terminalID.ToString();
-                    msg += " SN=" + serialNumber + "] ";
-                    msg += "AdminLog";
-                    msg += "(" + transactionID.ToString() + ") ";
-                    msg += logTime.ToString() + ", ";
-                    msg += "AdminID=" + String.Format("{0}, ", adminID);
-                    msg += "UserID=" + String.Format("{0}, ", userID);
-                    msg += "Action=" + action + ", ";
-                    msg += "Status=" + String.Format("{0:D}", result);
-                    RetrunShowInfo(msg);
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-
-            public Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
-                Int64 userID, Int32 doorID, String alarmType)
-            {
-                String msg;
-                try
-                {
-                    msg = "[" + terminalType + ":";
-                    msg += terminalID.ToString();
-                    msg += " SN=" + serialNumber + "] ";
-                    msg += "AlarmLog";
-                    msg += "(" + transactionID.ToString() + ") ";
-                    msg += logTime.ToString() + ", ";//'at'
-                    msg += "UserID=" + String.Format("{0}, ", userID);
-                    msg += "Door=" + doorID.ToString() + ", ";
-                    msg += "Type=" + alarmType;
-                    RetrunShowInfo(msg);
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-
-            public void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
-            {
-                String msg = "[" + terminalType + ":";
+                msg = "[" + terminalType + ":";
                 msg += terminalID.ToString();
                 msg += " SN=" + serialNumber + "] ";
-                msg += "KeepAlive";
+                msg += "TimeLog";
                 msg += "(" + transactionID.ToString() + ") ";
-                RetrunShowInfo(msg);
-            }
-
-            private void RetrunShowInfo(string msg)
-            {
-                if (msgList.Count >= 100)
+                msg += logTime.ToString() + ", ";
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Door=" + doorID.ToString() + ", ";
+                msg += "AttendStat=" + attendanceStatus + ", ";
+                msg += "VMode=" + verifyMode + ", ";
+                msg += "JobCode=" + jobCode.ToString() + ", ";
+                msg += "Antipass=" + antipass + ", ";
+                if (photo == null)
+                    msg += "Photo=No";
+                else
                 {
-                    msgList.Clear();
-                    rowId = 0;
-                    msgSblist.Clear();
+                    msg += "Photo=Yes ";
+                    msg += "(" + Convert.ToString(photo.Length) + "bytes)";
                 }
-                rowId += 1;
-                msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });
+                if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
+                    //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                    FileOperationExtension.AppendFile(@"C:\AutoProcessWorker\Logo\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
+                RetrunShowInfo(msg);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
 
-               msgList = msgList.OrderByDescending(o => o.RowId).ToList();
-               msgList.ForEach(m => { msgSblist.Add(m.Msg); });
+        public Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 adminID, Int64 userID, String action, Int32 result)
+        {
+            String msg;
 
-            if (ReportUpdataMsg!=null)
+            try
+            {
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "AdminLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";
+                msg += "AdminID=" + String.Format("{0}, ", adminID);
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Action=" + action + ", ";
+                msg += "Status=" + String.Format("{0:D}", result);
+                RetrunShowInfo(msg);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 userID, Int32 doorID, String alarmType)
+        {
+            String msg;
+            try
+            {
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "AlarmLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";//'at'
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Door=" + doorID.ToString() + ", ";
+                msg += "Type=" + alarmType;
+                RetrunShowInfo(msg);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
+        {
+            String msg = "[" + terminalType + ":";
+            msg += terminalID.ToString();
+            msg += " SN=" + serialNumber + "] ";
+            msg += "KeepAlive";
+            msg += "(" + transactionID.ToString() + ") ";
+            RetrunShowInfo(msg);
+        }
+
+        private void RetrunShowInfo(string msg)
+        {
+            if (msgList.Count >= 100)
+            {
+                msgList.Clear();
+                rowId = 0;
+                msgSblist.Clear();
+            }
+            rowId += 1;
+            msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });
+
+            msgList = msgList.OrderByDescending(o => o.RowId).ToList();
+            msgList.ForEach(m => { msgSblist.Add(m.Msg); });
+
+            if (ReportUpdataMsg != null)
             {
                 ReportUpdataMsg(msgSblist);
             }
-            }
+        }
 
         #endregion
 
@@ -979,46 +980,46 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             m_Running = false;
         }
-            /// <summary>
-            /// 关闭异步操作
-            /// </summary>
-            public void ClosingAttendanceUpSynchronous()
+        /// <summary>
+        /// 关闭异步操作
+        /// </summary>
+        public void ClosingAttendanceUpSynchronous()
+        {
+            if (m_Running)
             {
-                if (m_Running)
-                {
-                    m_Running = false;
-                    m_StopEvent.WaitOne();
-                }
-            }
-
-            /// <summary>
-            /// 开启异步操作
-            /// </summary>
-            public void OpenAttendanceUpSynchronous()
-            {
-                m_Running = true;
-                m_StopEvent = new ManualResetEvent(false);
-
-                ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
-            }
-            private void MonitoringThread(object state)
-            {
-                m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
-                                                                                                                   // Watch stop signal.
-                while (m_Running)
-                {
-                    Thread.Sleep(100);  // Simulate some lengthy operations.
-                }
-                m_LogServer.Dispose();  // Dispose log server
-                m_StopEvent.Set();
-                // Watch stop signal.
-                //Signal the stopped event.
+                m_Running = false;
+                m_StopEvent.WaitOne();
             }
         }
-    
+
+        /// <summary>
+        /// 开启异步操作
+        /// </summary>
+        public void OpenAttendanceUpSynchronous()
+        {
+            m_Running = true;
+            m_StopEvent = new ManualResetEvent(false);
+
+            ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
+        }
+        private void MonitoringThread(object state)
+        {
+            m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
+                                                                                                                // Watch stop signal.
+            while (m_Running)
+            {
+                Thread.Sleep(100);  // Simulate some lengthy operations.
+            }
+            m_LogServer.Dispose();  // Dispose log server
+            m_StopEvent.Set();
+            // Watch stop signal.
+            //Signal the stopped event.
+        }
+    }
+
     public class MsgCell
     {
         public int RowId { get; set; }
-        public string Msg {get;set;}
+        public string Msg { get; set; }
     }
 }

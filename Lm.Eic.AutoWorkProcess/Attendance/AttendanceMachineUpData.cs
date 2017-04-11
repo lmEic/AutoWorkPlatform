@@ -56,21 +56,30 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             AlarmLogCallback alarmLogCallback,
             PingCallback pingCallback)
         {
-            // Initialize objects.
-            m_Disposed = false;
-            m_PortNo = portNo;
-            m_TimeLogCallBack = timeLogCallback;
-            m_AdminLogCallBack = adminLogCallback;
-            m_AlarmLogCallBack = alarmLogCallback;
-            m_PingCallBack = pingCallback;
+            try
+            {
+                // Initialize objects.
+                m_Disposed = false;
+                m_PortNo = portNo;
+                m_TimeLogCallBack = timeLogCallback;
+                m_AdminLogCallBack = adminLogCallback;
+                m_AlarmLogCallBack = alarmLogCallback;
+                m_PingCallBack = pingCallback;
 
-            // Start TCP Listner.
-            m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
-            m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            m_Listner.Start();
+                // Start TCP Listner.
+                m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
+                m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                m_Listner.Start();
 
-            // Begin Accept.
-            m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
+                // Begin Accept.
+                m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.InnerException.Message);
+            }
+
         }
 
         ~AttendanceUpdateLogServer()
@@ -97,9 +106,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                             e.Dispose();
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    throw new Exception(ex.InnerException.Message);
                 }
             }
         }
@@ -258,12 +267,21 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         private string GetElementValue(XmlDocument doc, string elementName)
         {
-            foreach (XmlElement x in doc.DocumentElement.ChildNodes)
+            try
             {
-                if (x.Name == elementName)
-                    return x.InnerText;
+                foreach (XmlElement x in doc.DocumentElement.ChildNodes)
+                {
+                    if (x.Name == elementName)
+                        return x.InnerText;
+                }
+
+            }
+            catch (Exception es)
+            {
+                throw new Exception(es.InnerException.Message);
             }
             throw new Exception();
+
         }
 
         private void SendReply(String replyType, Int32 transId)
@@ -399,8 +417,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     logProcessed = m_TimeLogCallBack(termType, termId, serialNumber, transId, new DateTime(year, month, day, hour, minute, second), userID, doorID, attendStatus, verifyMode, jobCode, antipassStatus, photo);
             }
             catch (Exception)
-            {
-            }
+            { }
             if (logProcessed)
                 SendReply("UploadedLog", transId);
             else
@@ -482,8 +499,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     logProcessed = m_AdminLogCallBack(termType, termId, serialNumber, transId, new DateTime(year, month, day, hour, minute, second), adminID, userID, action, result);
             }
             catch (Exception)
-            {
-            }
+            { }
             if (logProcessed)
                 SendReply("UploadedLog", transId);
             else
@@ -554,8 +570,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     logProcessed = m_AlarmLogCallBack(termType, termId, serialNumber, transId, new DateTime(year, month, day, hour, minute, second), userID, doorID, alarmType);
             }
             catch (Exception)
-            {
-            }
+            { }
             if (logProcessed)
                 SendReply("UploadedLog", transId);
             else
@@ -724,9 +739,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 term.m_Stream.BeginRead(term.m_TmpBuffer, 0, MaxMessageSize,
                     new AsyncCallback(AttendanceUpdateTerminal.OnReceive), term);
             }
-            catch
+            catch (Exception ex)
             {
                 term.Dispose();
+                throw new Exception(ex.InnerException.Message);
             }
         }
 
@@ -784,8 +800,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     AllUserList.Add(tem);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                throw new Exception(ex.InnerException.Message);
                 //使用邮件发送错误信息
             }
         }
@@ -847,10 +864,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 }
                 return returnBool;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
-
+                throw new Exception(ex.InnerException.Message);
             }
         }
         #endregion
@@ -888,9 +905,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 RetrunShowInfo(msg);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
+                throw new Exception(ex.InnerException.Message);
             }
         }
 
@@ -914,9 +932,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 RetrunShowInfo(msg);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
+                throw new Exception(ex.InnerException.Message);
             }
         }
 

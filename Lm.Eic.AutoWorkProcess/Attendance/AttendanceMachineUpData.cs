@@ -184,9 +184,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     m_Stream.Close();
                     m_Client.Close();
                 }
-                catch
-                {
-                }
+                catch { }
             }
         }
 
@@ -253,10 +251,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             {
                 term.m_Stream.EndWrite(iar);
             }
-            catch
-            {
-
-            }
+            catch { }
         }
 
         // Check message is end
@@ -587,84 +582,93 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         // Parse a message
         private void ParseMessage(string message)
         {
-            XmlDocument doc = new XmlDocument();
-
-            String termType;
-            Int32 termId;
-            String serialNumber;
-            String eventType;
-            Int32 transId;
-
-            doc.Load(new StringReader(message));
-
-            //----------------- Terminal type
             try
             {
-                termType = GetElementValue(doc, "TerminalType");
+                XmlDocument doc = new XmlDocument();
+                String termType;
+                Int32 termId;
+                String serialNumber;
+                String eventType;
+                Int32 transId;
+
+                doc.Load(new StringReader(message));
+
+                //----------------- Terminal type
+                try
+                {
+                    termType = GetElementValue(doc, "TerminalType");
+                }
+                catch (System.Exception)
+                {
+                    termType = "";
+                }
+
+                //----------------- Terminal ID
+                try
+                {
+                    termId = Int32.Parse(GetElementValue(doc, "TerminalID"));
+                }
+                catch (System.Exception)
+                {
+                    termId = -1;
+                }
+
+                //----------------- Serial Number
+                try
+                {
+                    serialNumber = GetElementValue(doc, "DeviceSerialNo");
+                }
+                catch (System.Exception)
+                {
+                    serialNumber = "";
+                }
+
+                //----------------- Transaction ID
+                try
+                {
+                    transId = Int32.Parse(GetElementValue(doc, "TransID"));
+                }
+                catch (System.Exception)
+                {
+                    transId = -1;
+                }
+
+                //------------------ Event
+                try
+                {
+                    eventType = GetElementValue(doc, "Event");
+                }
+                catch (System.Exception)
+                {
+                    eventType = "";
+                }
+
+                switch (eventType)
+                {
+                    case "TimeLog":
+                        OnTimeLog(doc, termType, termId, serialNumber, transId);
+                        break;
+
+                    case "AdminLog":
+                        OnAdminLog(doc, termType, termId, serialNumber, transId);
+                        break;
+
+                    case "Alarm":
+                        OnAlarmLog(doc, termType, termId, serialNumber, transId);
+                        break;
+
+                    case "KeepAlive":
+                        OnPing(doc, termType, termId, serialNumber, transId);
+                        break;
+                }
+
             }
-            catch (System.Exception)
+            catch (Exception es)
             {
-                termType = "";
+
+                throw new Exception(es.InnerException.Message);
             }
 
-            //----------------- Terminal ID
-            try
-            {
-                termId = Int32.Parse(GetElementValue(doc, "TerminalID"));
-            }
-            catch (System.Exception)
-            {
-                termId = -1;
-            }
-
-            //----------------- Serial Number
-            try
-            {
-                serialNumber = GetElementValue(doc, "DeviceSerialNo");
-            }
-            catch (System.Exception)
-            {
-                serialNumber = "";
-            }
-
-            //----------------- Transaction ID
-            try
-            {
-                transId = Int32.Parse(GetElementValue(doc, "TransID"));
-            }
-            catch (System.Exception)
-            {
-                transId = -1;
-            }
-
-            //------------------ Event
-            try
-            {
-                eventType = GetElementValue(doc, "Event");
-            }
-            catch (System.Exception)
-            {
-                eventType = "";
-            }
-
-            switch (eventType)
-            {
-                case "TimeLog":
-                    OnTimeLog(doc, termType, termId, serialNumber, transId);
-                    break;
-
-                case "AdminLog":
-                    OnAdminLog(doc, termType, termId, serialNumber, transId);
-                    break;
-
-                case "Alarm":
-                    OnAlarmLog(doc, termType, termId, serialNumber, transId);
-                    break;
-
-                case "KeepAlive":
-                    OnPing(doc, termType, termId, serialNumber, transId);
-                    break;
-            }
         }
 
         public Boolean ParseBuffer(out Int32 consumed)
@@ -699,51 +703,61 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         public static void OnReceive(IAsyncResult iar)
         {
-            AttendanceUpdateTerminal term = (AttendanceUpdateTerminal)iar.AsyncState;
-
-            int recieved;
             try
             {
-                recieved = term.m_Stream.EndRead(iar);
-                if (recieved <= 0)
-                    throw new Exception("connection closed");
+                AttendanceUpdateTerminal term = (AttendanceUpdateTerminal)iar.AsyncState;
 
-                if (recieved > MaxMessageSize - term.m_RxCount)
-                    recieved = MaxMessageSize - term.m_RxCount;
-
-                Array.Copy(term.m_TmpBuffer, 0, term.m_RxBuffer, term.m_RxCount, recieved);
-                term.m_RxCount += recieved;
-
-                while (term.m_RxCount > 0)
+                int recieved;
+                ///尝试读取 如果读取错误 清除Term 重新读取 
+                try
                 {
-                    int consumed;
+                    recieved = term.m_Stream.EndRead(iar);
+                    if (recieved <= 0)
+                        throw new Exception("connection closed");
 
-                    // Parse Buffer
-                    if (!term.ParseBuffer(out consumed))
-                        throw new Exception("handle failed");
+                    if (recieved > MaxMessageSize - term.m_RxCount)
+                        recieved = MaxMessageSize - term.m_RxCount;
 
-                    // Remove Consumed Part of Buffer
-                    if (consumed > 0)
+                    Array.Copy(term.m_TmpBuffer, 0, term.m_RxBuffer, term.m_RxCount, recieved);
+                    term.m_RxCount += recieved;
+
+                    while (term.m_RxCount > 0)
                     {
-                        term.m_RxCount -= consumed;
-                        Array.Copy(term.m_RxBuffer, consumed, term.m_RxBuffer, 0, term.m_RxCount);
+                        int consumed;
+
+                        // Parse Buffer
+                        if (!term.ParseBuffer(out consumed))
+                            throw new Exception("handle failed");
+
+                        // Remove Consumed Part of Buffer
+                        if (consumed > 0)
+                        {
+                            term.m_RxCount -= consumed;
+                            Array.Copy(term.m_RxBuffer, consumed, term.m_RxBuffer, 0, term.m_RxCount);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    else
-                    {
-                        break;
-                    }
+
+                    // Restart alive timer
+                    term.RestartAliveTimer();
+                    term.m_Stream.BeginRead(term.m_TmpBuffer, 0, MaxMessageSize,
+                        new AsyncCallback(AttendanceUpdateTerminal.OnReceive), term);
+                }
+                catch (Exception)
+                {
+                    term.Dispose();
                 }
 
-                // Restart alive timer
-                term.RestartAliveTimer();
-                term.m_Stream.BeginRead(term.m_TmpBuffer, 0, MaxMessageSize,
-                    new AsyncCallback(AttendanceUpdateTerminal.OnReceive), term);
             }
             catch (Exception ex)
             {
-                term.Dispose();
+
                 throw new Exception(ex.InnerException.Message);
             }
+
         }
 
     }

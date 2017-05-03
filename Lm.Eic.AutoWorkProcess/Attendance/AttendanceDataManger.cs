@@ -46,6 +46,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 worker = workers.FirstOrDefault(w => w.WorkerId == workerId);
                 if (worker == null)
                 {
+                    if (workerId == "604442")
+                    {
+                        int n = 1;
+                    }
                     var m = this.GetWorkerChangeInfo(workerId);
                     if (m != null)
                         worker = workers.FirstOrDefault(w => w.WorkerId == m.NewWorkerId);
@@ -82,7 +86,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     {
                         AttendFingerPrintDataHandler.BackupData(attendDataPerWorker, record);
                         //从内存中移除数据，减少查询时间
-                        workers.Remove(worker);
+                        //workers.Remove(worker);
                         //从内存中移除该人员的考勤数据，减少查询时间
                         attendDataPerWorker.ForEach(m => fingerPrintDatas.Remove(m));
                         totalRecord += record;
@@ -287,9 +291,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         public void InitDatas()
         {
-            for (int day = 1; day <= 4; day++)
+            for (int day = 1; day <= 2; day++)
             {
-                DateTime dt = new DateTime(2017, 4, day, 0, 0, 0);
+                DateTime dt = new DateTime(2017, 5, day, 0, 0, 0);
                 var datas = this.LoadDatas(dt);
                 if (datas != null && datas.Count > 0)
                 {
@@ -413,8 +417,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             StringBuilder sb = new StringBuilder();
             sb.Append("INSERT INTO Archives_ForgetInputWorkerInfo  (WorkerId,WorkerName,OpDate,OpTime)");
             sb.AppendFormat(" values ('{0}',", entity.WorkerId);
-            sb.AppendFormat("'{0}')", entity.WorkerName);
-            sb.AppendFormat("'{0}')", DateTime.Now.ToDate());
+            sb.AppendFormat("'{0}',", entity.WorkerName);
+            sb.AppendFormat("'{0}',", DateTime.Now.ToDate());
             sb.AppendFormat("'{0}')", DateTime.Now.ToDateTime());
             return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
         }

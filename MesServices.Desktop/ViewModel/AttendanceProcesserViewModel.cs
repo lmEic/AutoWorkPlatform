@@ -224,7 +224,15 @@ namespace MesServices.Desktop.ViewModel
             {
                 if (ReportProcessMsg != null)
                     ReportProcessMsg("开始汇总...");
-                this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
+                try
+                {
+                    this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
+                }
+                catch (System.Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+
                 if (ReportProcessMsg != null)
                     ReportProcessMsg("汇总结束!");
             }

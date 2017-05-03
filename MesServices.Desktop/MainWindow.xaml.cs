@@ -32,7 +32,20 @@ namespace MesServices.Desktop
 
         private void DazzleButton_Click_1(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            try
+            {
+                if (this.WindowState == WindowState.Maximized)
+                    this.WindowState = WindowState.Normal;
+                else
+                    this.WindowState = WindowState.Maximized;
+
+            }
+            catch (Exception)
+            {
+                this.WindowState = System.Windows.WindowState.Normal;
+                throw;
+            }
+
         }
 
         private void DazzleButton_Click_2(object sender, RoutedEventArgs e)
@@ -40,6 +53,6 @@ namespace MesServices.Desktop
             this.WindowState = System.Windows.WindowState.Minimized;
         }
 
-      
+
     }
 }

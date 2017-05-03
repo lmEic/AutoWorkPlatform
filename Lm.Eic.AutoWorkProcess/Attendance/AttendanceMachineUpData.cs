@@ -38,7 +38,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         Int32 JobCode,
         String Antipass,
         Byte[] Photo);
-   internal class AttendanceUpdateLogServer : IDisposable
+    internal class AttendanceUpdateLogServer : IDisposable
     {
         public Boolean m_Disposed;
         public UInt16 m_PortNo;
@@ -56,21 +56,30 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             AlarmLogCallback alarmLogCallback,
             PingCallback pingCallback)
         {
-            // Initialize objects.
-            m_Disposed = false;
-            m_PortNo = portNo;
-            m_TimeLogCallBack = timeLogCallback;
-            m_AdminLogCallBack = adminLogCallback;
-            m_AlarmLogCallBack = alarmLogCallback;
-            m_PingCallBack = pingCallback;
+            try
+            {
+                // Initialize objects.
+                m_Disposed = false;
+                m_PortNo = portNo;
+                m_TimeLogCallBack = timeLogCallback;
+                m_AdminLogCallBack = adminLogCallback;
+                m_AlarmLogCallBack = alarmLogCallback;
+                m_PingCallBack = pingCallback;
 
-            // Start TCP Listner.
-            m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
-            m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            m_Listner.Start();
+                // Start TCP Listner.
+                m_Listner = new TcpListener(IPAddress.Any, m_PortNo);
+                m_Listner.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                m_Listner.Start();
 
-            // Begin Accept.
-            m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
+                // Begin Accept.
+                m_Listner.BeginAcceptTcpClient(new AsyncCallback(AttendanceUpdateLogServer.OnAccept), this);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.InnerException.Message);
+            }
+
         }
 
         ~AttendanceUpdateLogServer()
@@ -97,9 +106,9 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                             e.Dispose();
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    throw new Exception(ex.InnerException.Message);
                 }
             }
         }
@@ -175,9 +184,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     m_Stream.Close();
                     m_Client.Close();
                 }
-                catch
-                {
-                }
+                catch { }
             }
         }
 
@@ -244,10 +251,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             {
                 term.m_Stream.EndWrite(iar);
             }
-            catch
-            {
-
-            }
+            catch { }
         }
 
         // Check message is end
@@ -258,12 +262,21 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         private string GetElementValue(XmlDocument doc, string elementName)
         {
-            foreach (XmlElement x in doc.DocumentElement.ChildNodes)
+            try
             {
-                if (x.Name == elementName)
-                    return x.InnerText;
+                foreach (XmlElement x in doc.DocumentElement.ChildNodes)
+                {
+                    if (x.Name == elementName)
+                        return x.InnerText;
+                }
+
+            }
+            catch (Exception es)
+            {
+                throw new Exception(es.InnerException.Message);
             }
             throw new Exception();
+
         }
 
         private void SendReply(String replyType, Int32 transId)
@@ -399,8 +412,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     logProcessed = m_TimeLogCallBack(termType, termId, serialNumber, transId, new DateTime(year, month, day, hour, minute, second), userID, doorID, attendStatus, verifyMode, jobCode, antipassStatus, photo);
             }
             catch (Exception)
-            {
-            }
+            { }
             if (logProcessed)
                 SendReply("UploadedLog", transId);
             else
@@ -482,8 +494,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     logProcessed = m_AdminLogCallBack(termType, termId, serialNumber, transId, new DateTime(year, month, day, hour, minute, second), adminID, userID, action, result);
             }
             catch (Exception)
-            {
-            }
+            { }
             if (logProcessed)
                 SendReply("UploadedLog", transId);
             else
@@ -554,8 +565,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     logProcessed = m_AlarmLogCallBack(termType, termId, serialNumber, transId, new DateTime(year, month, day, hour, minute, second), userID, doorID, alarmType);
             }
             catch (Exception)
-            {
-            }
+            { }
             if (logProcessed)
                 SendReply("UploadedLog", transId);
             else
@@ -572,84 +582,93 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         // Parse a message
         private void ParseMessage(string message)
         {
-            XmlDocument doc = new XmlDocument();
-
-            String termType;
-            Int32 termId;
-            String serialNumber;
-            String eventType;
-            Int32 transId;
-
-            doc.Load(new StringReader(message));
-
-            //----------------- Terminal type
             try
             {
-                termType = GetElementValue(doc, "TerminalType");
+                XmlDocument doc = new XmlDocument();
+                String termType;
+                Int32 termId;
+                String serialNumber;
+                String eventType;
+                Int32 transId;
+
+                doc.Load(new StringReader(message));
+
+                //----------------- Terminal type
+                try
+                {
+                    termType = GetElementValue(doc, "TerminalType");
+                }
+                catch (System.Exception)
+                {
+                    termType = "";
+                }
+
+                //----------------- Terminal ID
+                try
+                {
+                    termId = Int32.Parse(GetElementValue(doc, "TerminalID"));
+                }
+                catch (System.Exception)
+                {
+                    termId = -1;
+                }
+
+                //----------------- Serial Number
+                try
+                {
+                    serialNumber = GetElementValue(doc, "DeviceSerialNo");
+                }
+                catch (System.Exception)
+                {
+                    serialNumber = "";
+                }
+
+                //----------------- Transaction ID
+                try
+                {
+                    transId = Int32.Parse(GetElementValue(doc, "TransID"));
+                }
+                catch (System.Exception)
+                {
+                    transId = -1;
+                }
+
+                //------------------ Event
+                try
+                {
+                    eventType = GetElementValue(doc, "Event");
+                }
+                catch (System.Exception)
+                {
+                    eventType = "";
+                }
+
+                switch (eventType)
+                {
+                    case "TimeLog":
+                        OnTimeLog(doc, termType, termId, serialNumber, transId);
+                        break;
+
+                    case "AdminLog":
+                        OnAdminLog(doc, termType, termId, serialNumber, transId);
+                        break;
+
+                    case "Alarm":
+                        OnAlarmLog(doc, termType, termId, serialNumber, transId);
+                        break;
+
+                    case "KeepAlive":
+                        OnPing(doc, termType, termId, serialNumber, transId);
+                        break;
+                }
+
             }
-            catch (System.Exception)
+            catch (Exception es)
             {
-                termType = "";
+
+                throw new Exception(es.InnerException.Message);
             }
 
-            //----------------- Terminal ID
-            try
-            {
-                termId = Int32.Parse(GetElementValue(doc, "TerminalID"));
-            }
-            catch (System.Exception)
-            {
-                termId = -1;
-            }
-
-            //----------------- Serial Number
-            try
-            {
-                serialNumber = GetElementValue(doc, "DeviceSerialNo");
-            }
-            catch (System.Exception)
-            {
-                serialNumber = "";
-            }
-
-            //----------------- Transaction ID
-            try
-            {
-                transId = Int32.Parse(GetElementValue(doc, "TransID"));
-            }
-            catch (System.Exception)
-            {
-                transId = -1;
-            }
-
-            //------------------ Event
-            try
-            {
-                eventType = GetElementValue(doc, "Event");
-            }
-            catch (System.Exception)
-            {
-                eventType = "";
-            }
-
-            switch (eventType)
-            {
-                case "TimeLog":
-                    OnTimeLog(doc, termType, termId, serialNumber, transId);
-                    break;
-
-                case "AdminLog":
-                    OnAdminLog(doc, termType, termId, serialNumber, transId);
-                    break;
-
-                case "Alarm":
-                    OnAlarmLog(doc, termType, termId, serialNumber, transId);
-                    break;
-
-                case "KeepAlive":
-                    OnPing(doc, termType, termId, serialNumber, transId);
-                    break;
-            }
         }
 
         public Boolean ParseBuffer(out Int32 consumed)
@@ -684,120 +703,132 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         public static void OnReceive(IAsyncResult iar)
         {
-            AttendanceUpdateTerminal term = (AttendanceUpdateTerminal)iar.AsyncState;
-
-            int recieved;
             try
             {
-                recieved = term.m_Stream.EndRead(iar);
-                if (recieved <= 0)
-                    throw new Exception("connection closed");
+                AttendanceUpdateTerminal term = (AttendanceUpdateTerminal)iar.AsyncState;
 
-                if (recieved > MaxMessageSize - term.m_RxCount)
-                    recieved = MaxMessageSize - term.m_RxCount;
-
-                Array.Copy(term.m_TmpBuffer, 0, term.m_RxBuffer, term.m_RxCount, recieved);
-                term.m_RxCount += recieved;
-
-                while (term.m_RxCount > 0)
+                int recieved;
+                ///尝试读取 如果读取错误 清除Term 重新读取 
+                try
                 {
-                    int consumed;
+                    recieved = term.m_Stream.EndRead(iar);
+                    if (recieved <= 0)
+                        throw new Exception("connection closed");
 
-                    // Parse Buffer
-                    if (!term.ParseBuffer(out consumed))
-                        throw new Exception("handle failed");
+                    if (recieved > MaxMessageSize - term.m_RxCount)
+                        recieved = MaxMessageSize - term.m_RxCount;
 
-                    // Remove Consumed Part of Buffer
-                    if (consumed > 0)
+                    Array.Copy(term.m_TmpBuffer, 0, term.m_RxBuffer, term.m_RxCount, recieved);
+                    term.m_RxCount += recieved;
+
+                    while (term.m_RxCount > 0)
                     {
-                        term.m_RxCount -= consumed;
-                        Array.Copy(term.m_RxBuffer, consumed, term.m_RxBuffer, 0, term.m_RxCount);
+                        int consumed;
+
+                        // Parse Buffer
+                        if (!term.ParseBuffer(out consumed))
+                            throw new Exception("handle failed");
+
+                        // Remove Consumed Part of Buffer
+                        if (consumed > 0)
+                        {
+                            term.m_RxCount -= consumed;
+                            Array.Copy(term.m_RxBuffer, consumed, term.m_RxBuffer, 0, term.m_RxCount);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    else
-                    {
-                        break;
-                    }
+
+                    // Restart alive timer
+                    term.RestartAliveTimer();
+                    term.m_Stream.BeginRead(term.m_TmpBuffer, 0, MaxMessageSize,
+                        new AsyncCallback(AttendanceUpdateTerminal.OnReceive), term);
+                }
+                catch (Exception)
+                {
+                    term.Dispose();
                 }
 
-                // Restart alive timer
-                term.RestartAliveTimer();
-                term.m_Stream.BeginRead(term.m_TmpBuffer, 0, MaxMessageSize,
-                    new AsyncCallback(AttendanceUpdateTerminal.OnReceive), term);
             }
-            catch
+            catch (Exception ex)
             {
-                term.Dispose();
+
+                throw new Exception(ex.InnerException.Message);
             }
+
         }
 
     }
-    public class AttendanceUpSynchronous 
+    public class AttendanceUpSynchronous
     {
-            AttendanceUpdateLogServer m_LogServer;          // Log Server
-            Boolean m_Running ;              // Is Running Monitor Thread
-            ManualResetEvent m_StopEvent;   // stop event
-        
-        public Action<List<string>> ReportUpdataMsg { get; set; }
-   
+        AttendanceUpdateLogServer m_LogServer;          // Log Server
+        Boolean m_Running;              // Is Running Monitor Thread
+        ManualResetEvent m_StopEvent;   // stop event
 
-            List<MsgCell> msgList = new List<MsgCell>();
-            int rowId = 0;
-           List<string> msgSblist = new List<string>();
+        public Action<List<string>> ReportUpdataMsg { get; set; }
+
+
+        List<MsgCell> msgList = new List<MsgCell>();
+        int rowId = 0;
+        List<string> msgSblist = new List<string>();
         /// <summary>
         /// 扫描端口
         /// </summary>
         private UInt16 _portNum = 5005;
         public UInt16 PortNum
-            {
-                set { _portNum = value; }
-                get { return _portNum; }
-            }
+        {
+            set { _portNum = value; }
+            get { return _portNum; }
+        }
         #region 数据库入存
-            /// <summary>
-            /// 所有用户列表
-            /// </summary>
-            private List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
-            /// <summary>
-            /// 刷新所有用户列表
-            /// </summary>
-            private void RefreshUserList()
+        /// <summary>
+        /// 所有用户列表
+        /// </summary>
+        private List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
+        /// <summary>
+        /// 刷新所有用户列表
+        /// </summary>
+        private void RefreshUserList()
+        {
+            try
             {
-                try
+                AllUserList.Clear();
+                foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
                 {
-                    AllUserList.Clear();
-                    foreach (DataRow dr in DbHelper.Hrm.LoadTable("SELECT  WorkerId,Name,CardID FROM  Archives_EmployeeIdentityInfo WHERE(WorkingStatus = '在职')").Rows)
+                    var tem = new AttendFingerPrintDataInTimeModel();
+                    if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
                     {
-                        var tem = new AttendFingerPrintDataInTimeModel();
-                        if (dr["WorkerId"] != null && dr["WorkerId"].ToString() != "")
-                        {
-                            tem.WorkerId = dr["WorkerId"].ToString().Trim();
-                        }
-
-                        if (dr["Name"] != null && dr["Name"].ToString() != "")
-                        {
-                            tem.WorkerName = dr["Name"].ToString().Trim();
-                        }
-                        if (dr["CardID"] != null && dr["CardID"].ToString() != "")
-                        {
-                            tem.CardID = dr["CardID"].ToString().Trim();
-                        }
-                        AllUserList.Add(tem);
+                        tem.WorkerId = dr["WorkerId"].ToString().Trim();
                     }
-                }
-                catch
-                {
-                    //使用邮件发送错误信息
+
+                    if (dr["Name"] != null && dr["Name"].ToString() != "")
+                    {
+                        tem.WorkerName = dr["Name"].ToString().Trim();
+                    }
+                    if (dr["CardID"] != null && dr["CardID"].ToString() != "")
+                    {
+                        tem.CardID = dr["CardID"].ToString().Trim();
+                    }
+                    AllUserList.Add(tem);
                 }
             }
-            /// <summary>
-            /// 存入到数据数库内
-            /// </summary>
-            /// <param name="UserID"></param>
-            /// <param name="anVerifyMode"></param>
-            /// <param name="anLogDate"></param>
-            /// <param name="astrSerialNo"></param>
-            private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+            catch (Exception ex)
             {
+                throw new Exception(ex.InnerException.Message);
+                //使用邮件发送错误信息
+            }
+        }
+        /// <summary>
+        /// 存入到数据数库内
+        /// </summary>
+        /// <param name="UserID"></param>
+        /// <param name="anVerifyMode"></param>
+        /// <param name="anLogDate"></param>
+        /// <param name="astrSerialNo"></param>
+        private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        {
 
             try
             {
@@ -817,6 +848,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     tem.WorkerId = userInfo.WorkerId;
                     tem.WorkerName = userInfo.WorkerName;
                     tem.CardID = userInfo.CardID;
+                    if (astrSerialNo == null) tem.MachineId = string.Empty;
                     tem.MachineId = astrSerialNo;
                     switch (anVerifyMode)
                     {
@@ -846,132 +878,134 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 }
                 return returnBool;
             }
+            catch (Exception ex)
+            {
+                return false;
+                throw new Exception(ex.InnerException.Message);
+            }
+        }
+        #endregion
+
+        #region  处理返回的信息
+
+        public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
+        {
+            String msg;
+            try
+            {
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "TimeLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Door=" + doorID.ToString() + ", ";
+                msg += "AttendStat=" + attendanceStatus + ", ";
+                msg += "VMode=" + verifyMode + ", ";
+                msg += "JobCode=" + jobCode.ToString() + ", ";
+                msg += "Antipass=" + antipass + ", ";
+                if (photo == null)
+                    msg += "Photo=No";
+                else
+                {
+                    msg += "Photo=Yes ";
+                    msg += "(" + Convert.ToString(photo.Length) + "bytes)";
+                }
+                if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
+                    //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
+                    FileOperationExtension.AppendFile(@"C:\AutoProcessWorker\Logo\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
+                RetrunShowInfo(msg);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+                throw new Exception(ex.InnerException.Message);
+            }
+        }
+
+        public Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 adminID, Int64 userID, String action, Int32 result)
+        {
+            String msg;
+
+            try
+            {
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "AdminLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";
+                msg += "AdminID=" + String.Format("{0}, ", adminID);
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Action=" + action + ", ";
+                msg += "Status=" + String.Format("{0:D}", result);
+                RetrunShowInfo(msg);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+                throw new Exception(ex.InnerException.Message);
+            }
+        }
+
+        public Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
+            Int64 userID, Int32 doorID, String alarmType)
+        {
+            String msg;
+            try
+            {
+                msg = "[" + terminalType + ":";
+                msg += terminalID.ToString();
+                msg += " SN=" + serialNumber + "] ";
+                msg += "AlarmLog";
+                msg += "(" + transactionID.ToString() + ") ";
+                msg += logTime.ToString() + ", ";//'at'
+                msg += "UserID=" + String.Format("{0}, ", userID);
+                msg += "Door=" + doorID.ToString() + ", ";
+                msg += "Type=" + alarmType;
+                RetrunShowInfo(msg);
+                return true;
+            }
             catch (Exception)
             {
                 return false;
-
             }
-            }
-            #endregion
-           
-        #region  处理返回的信息
+        }
 
-            public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
-                Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
+        public void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
+        {
+            String msg = "[" + terminalType + ":";
+            msg += terminalID.ToString();
+            msg += " SN=" + serialNumber + "] ";
+            msg += "KeepAlive";
+            msg += "(" + transactionID.ToString() + ") ";
+            RetrunShowInfo(msg);
+        }
+
+        private void RetrunShowInfo(string msg)
+        {
+            if (msgList.Count >= 100)
             {
-                String msg;
-                try
-                {
-                    msg = "[" + terminalType + ":";
-                    msg += terminalID.ToString();
-                    msg += " SN=" + serialNumber + "] ";
-                    msg += "TimeLog";
-                    msg += "(" + transactionID.ToString() + ") ";
-                    msg += logTime.ToString() + ", ";
-                    msg += "UserID=" + String.Format("{0}, ", userID);
-                    msg += "Door=" + doorID.ToString() + ", ";
-                    msg += "AttendStat=" + attendanceStatus + ", ";
-                    msg += "VMode=" + verifyMode + ", ";
-                    msg += "JobCode=" + jobCode.ToString() + ", ";
-                    msg += "Antipass=" + antipass + ", ";
-                    if (photo == null)
-                        msg += "Photo=No";
-                    else
-                    {
-                        msg += "Photo=Yes ";
-                        msg += "(" + Convert.ToString(photo.Length) + "bytes)";
-                    }
-                    if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
-                        //BeginInvoke(new delegateAddEvent(OnAddEvent), msg);
-                        FileOperationExtension.AppendFile(@"C:\AutoProcessWorker\Logo\" + logTime.ToDate().ToString("yyyy-MM-dd") + ".txt", msg);
-                    RetrunShowInfo(msg);
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
+                msgList.Clear();
+                rowId = 0;
+                msgSblist.Clear();
             }
+            rowId += 1;
+            msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });
 
-            public Boolean OnAdminLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
-                Int64 adminID, Int64 userID, String action, Int32 result)
-            {
-                String msg;
+            msgList = msgList.OrderByDescending(o => o.RowId).ToList();
+            msgList.ForEach(m => { msgSblist.Add(m.Msg); });
 
-                try
-                {
-                    msg = "[" + terminalType + ":";
-                    msg += terminalID.ToString();
-                    msg += " SN=" + serialNumber + "] ";
-                    msg += "AdminLog";
-                    msg += "(" + transactionID.ToString() + ") ";
-                    msg += logTime.ToString() + ", ";
-                    msg += "AdminID=" + String.Format("{0}, ", adminID);
-                    msg += "UserID=" + String.Format("{0}, ", userID);
-                    msg += "Action=" + action + ", ";
-                    msg += "Status=" + String.Format("{0:D}", result);
-                    RetrunShowInfo(msg);
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-
-            public Boolean OnAlarmLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
-                Int64 userID, Int32 doorID, String alarmType)
-            {
-                String msg;
-                try
-                {
-                    msg = "[" + terminalType + ":";
-                    msg += terminalID.ToString();
-                    msg += " SN=" + serialNumber + "] ";
-                    msg += "AlarmLog";
-                    msg += "(" + transactionID.ToString() + ") ";
-                    msg += logTime.ToString() + ", ";//'at'
-                    msg += "UserID=" + String.Format("{0}, ", userID);
-                    msg += "Door=" + doorID.ToString() + ", ";
-                    msg += "Type=" + alarmType;
-                    RetrunShowInfo(msg);
-                    return true;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-
-            public void OnPing(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID)
-            {
-                String msg = "[" + terminalType + ":";
-                msg += terminalID.ToString();
-                msg += " SN=" + serialNumber + "] ";
-                msg += "KeepAlive";
-                msg += "(" + transactionID.ToString() + ") ";
-                RetrunShowInfo(msg);
-            }
-
-            private void RetrunShowInfo(string msg)
-            {
-                if (msgList.Count >= 100)
-                {
-                    msgList.Clear();
-                    rowId = 0;
-                    msgSblist.Clear();
-                }
-                rowId += 1;
-                msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });
-
-               msgList = msgList.OrderByDescending(o => o.RowId).ToList();
-               msgList.ForEach(m => { msgSblist.Add(m.Msg); });
-
-            if (ReportUpdataMsg!=null)
+            if (ReportUpdataMsg != null)
             {
                 ReportUpdataMsg(msgSblist);
             }
-            }
+        }
 
         #endregion
 
@@ -979,46 +1013,46 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             m_Running = false;
         }
-            /// <summary>
-            /// 关闭异步操作
-            /// </summary>
-            public void ClosingAttendanceUpSynchronous()
+        /// <summary>
+        /// 关闭异步操作
+        /// </summary>
+        public void ClosingAttendanceUpSynchronous()
+        {
+            if (m_Running)
             {
-                if (m_Running)
-                {
-                    m_Running = false;
-                    m_StopEvent.WaitOne();
-                }
-            }
-
-            /// <summary>
-            /// 开启异步操作
-            /// </summary>
-            public void OpenAttendanceUpSynchronous()
-            {
-                m_Running = true;
-                m_StopEvent = new ManualResetEvent(false);
-
-                ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
-            }
-            private void MonitoringThread(object state)
-            {
-                m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
-                                                                                                                   // Watch stop signal.
-                while (m_Running)
-                {
-                    Thread.Sleep(100);  // Simulate some lengthy operations.
-                }
-                m_LogServer.Dispose();  // Dispose log server
-                m_StopEvent.Set();
-                // Watch stop signal.
-                //Signal the stopped event.
+                m_Running = false;
+                m_StopEvent.WaitOne();
             }
         }
-    
+
+        /// <summary>
+        /// 开启异步操作
+        /// </summary>
+        public void OpenAttendanceUpSynchronous()
+        {
+            m_Running = true;
+            m_StopEvent = new ManualResetEvent(false);
+
+            ThreadPool.QueueUserWorkItem(new WaitCallback(MonitoringThread));
+        }
+        private void MonitoringThread(object state)
+        {
+            m_LogServer = new AttendanceUpdateLogServer(_portNum, OnTimeLog, OnAdminLog, OnAlarmLog, OnPing);   // Create and start log server.
+                                                                                                                // Watch stop signal.
+            while (m_Running)
+            {
+                Thread.Sleep(100);  // Simulate some lengthy operations.
+            }
+            m_LogServer.Dispose();  // Dispose log server
+            m_StopEvent.Set();
+            // Watch stop signal.
+            //Signal the stopped event.
+        }
+    }
+
     public class MsgCell
     {
         public int RowId { get; set; }
-        public string Msg {get;set;}
+        public string Msg { get; set; }
     }
 }

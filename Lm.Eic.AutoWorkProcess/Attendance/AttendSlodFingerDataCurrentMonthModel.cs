@@ -289,6 +289,16 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             get { return _workerid; }
         }
 
+        private string _cardid;
+        /// <summary>
+        ///作业工号
+        /// </summary>
+        public string CardID
+        {
+            set { _cardid = value; }
+            get { return _cardid; }
+        }
+
         private string _name;
 
         /// <summary>
@@ -379,8 +389,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     /// </summary>
     public partial class ClassTypeModel
     {
-        public string WorkerId { get; set;}
+        public string WorkerId { get; set; }
 
-        public string ClassType { get; set;}
+        public string ClassType { get; set; }
     }
 }

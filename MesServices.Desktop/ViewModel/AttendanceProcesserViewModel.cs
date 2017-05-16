@@ -7,6 +7,7 @@ using Lm.Eic.Uti.Common.YleeTimer;
 using Lm.Eic.Uti.Common.YleeMessage.Windows;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.Threading;
+using Lm.Eic.AutoWorkProcess;
 
 namespace MesServices.Desktop.ViewModel
 {
@@ -15,7 +16,7 @@ namespace MesServices.Desktop.ViewModel
     /// </summary>
     public class AttendanceProcesserViewModel : ViewModelBase
     {
-        #region property 
+        #region property
         HandleAttendanceDataTimer timer = null;
         AttendanceUpSynchronous attendmanceMachineDataManager = null;
         DateTime _SlodCardDate = DateTime.Now;
@@ -174,17 +175,23 @@ namespace MesServices.Desktop.ViewModel
 
         private void ProcessAttendanceMachineData(object o)
         {
-
-            if (this.AttendanceMachineUpDataText == "考勤机服务器启动")
+            try
             {
-                this.AttendanceMachineUpDataText = "考勤机服务器停止";
-                attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
+                if (this.AttendanceMachineUpDataText == "考勤机服务器启动")
+                {
+                    this.AttendanceMachineUpDataText = "考勤机服务器停止";
+                    attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
+                }
+                else
+                {
+                    this.AttendanceMachineUpDataText = "考勤机服务器启动";
+                    attendmanceMachineDataManager.ClosingAttendanceUpSynchronous();
+
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                this.AttendanceMachineUpDataText = "考勤机服务器启动";
-                attendmanceMachineDataManager.ClosingAttendanceUpSynchronous();
-
+                ErrorMessageTracer.LogErrorMsgToFile("", ex);
             }
         }
 
@@ -196,7 +203,7 @@ namespace MesServices.Desktop.ViewModel
     /// </summary>
     public class HandleAttendanceDataTimer : LeeTimerBase
     {
-        #region property 
+        #region property
         /// <summary>
         /// 刷卡日期
         /// </summary>
@@ -205,6 +212,8 @@ namespace MesServices.Desktop.ViewModel
         TimerTarget ttgt = null;
         //处理进度汇报句柄
         public Action<string> ReportProcessMsg { get; set; }
+
+        private bool IsStart = true;
         #endregion
 
         public HandleAttendanceDataTimer()
@@ -220,13 +229,16 @@ namespace MesServices.Desktop.ViewModel
             ReportProcessMsg("");
             DateTime d = DateTime.Now;
             int m = d.Minute, h = d.Hour, s = d.Second;
-            if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond)
+            if (!IsStart) return;
+            if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond && IsStart)
             {
                 if (ReportProcessMsg != null)
                     ReportProcessMsg("开始汇总...");
                 try
                 {
+                    IsStart = false;
                     this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
+                    IsStart = true;
                 }
                 catch (System.Exception ex)
                 {

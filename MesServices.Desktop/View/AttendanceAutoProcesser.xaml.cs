@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using MesServices.Desktop.ViewModel;
+using System.Threading;
 
 namespace MesServices.Desktop
 {
@@ -26,8 +27,9 @@ namespace MesServices.Desktop
             InitializeComponent();
             vm = new ViewModel.AttendanceProcesserViewModel();
             this.DataContext = vm;
+
         }
 
-     
+
     }
 }

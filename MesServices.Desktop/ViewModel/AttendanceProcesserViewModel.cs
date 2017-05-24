@@ -8,21 +8,22 @@ using Lm.Eic.Uti.Common.YleeMessage.Windows;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.Threading;
 
+
 namespace MesServices.Desktop.ViewModel
 {
     /// <summary>
     /// 考勤数据自动处理模型
     /// </summary>
-    public class AttendanceProcesserViewModel:ViewModelBase
+    public class AttendanceProcesserViewModel : ViewModelBase
     {
         #region property 
         HandleAttendanceDataTimer timer = null;
         AttendanceUpSynchronous attendmanceMachineDataManager = null;
-        DateTime  _SlodCardDate=DateTime.Now;
+        DateTime _SlodCardDate = DateTime.Now;
         /// <summary>
         /// 刷卡日期
         /// </summary>
-        public DateTime  SlodCardDate
+        public DateTime SlodCardDate
         {
             get
             {
@@ -38,7 +39,7 @@ namespace MesServices.Desktop.ViewModel
             }
         }
 
-        string _AutoHandleCommandText="启动自动处理";
+        string _AutoHandleCommandText = "启动自动处理";
         public string AutoHandleCommandText
         {
             get
@@ -88,9 +89,9 @@ namespace MesServices.Desktop.ViewModel
                 }
             }
         }
-     
 
-        List<string> _machineUpdateMsg = new List<string>() {"上传数据"};
+
+        List<string> _machineUpdateMsg = new List<string>() { "上传数据" };
         /// <summary>
         /// 考勤机上传数据
         /// </summary>
@@ -111,21 +112,31 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
 
-        
+
 
         public AttendanceProcesserViewModel()
         {
-            this.timer = new ViewModel.HandleAttendanceDataTimer() { ReportProcessMsg = msg => {
-                this.SlodCardDate = DateTime.Now.ToDate();
-                this.ProcessMessage = msg;
-            } };
-            this.attendmanceMachineDataManager = new AttendanceUpSynchronous() {
-           
-                ReportUpdataMsg = msgList => {
-                this.MachineUpdateMsg = msgList;
-            } };
-        }
+            this.timer = new ViewModel.HandleAttendanceDataTimer()
+            {
+                ReportProcessMsg = msg =>
+                {
+                    this.SlodCardDate = DateTime.Now.ToDate();
+                    this.ProcessMessage = msg;
+                }
+            };
 
+            //实例化考勤机上传数据
+            this.attendmanceMachineDataManager = new AttendanceUpSynchronous()
+            {
+
+                ReportUpdataMsg = msgList =>
+                {
+                    this.MachineUpdateMsg = msgList;
+                }
+            };
+
+        }
+         
         #region command
 
         /// <summary>
@@ -153,6 +164,9 @@ namespace MesServices.Desktop.ViewModel
 
             }
         }
+
+
+        #region  考勤 
         /// <summary>
         /// 考勤机械上传数据
         /// </summary>
@@ -163,31 +177,39 @@ namespace MesServices.Desktop.ViewModel
                 return new RelayCommand(ProcessAttendanceMachineData);
             }
         }
-      
+
+        
 
         private void ProcessAttendanceMachineData(object o)
         {
-           
+            
             if (this.AttendanceMachineUpDataText == "考勤机服务器启动")
             {
                 this.AttendanceMachineUpDataText = "考勤机服务器停止";
+
                 attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
+
             }
             else
             {
                 this.AttendanceMachineUpDataText = "考勤机服务器启动";
+
                 attendmanceMachineDataManager.ClosingAttendanceUpSynchronous();
 
             }
         }
-      
+
+        #endregion
+
+
+
         #endregion
 
     }
     /// <summary>
     /// 考勤处理计时器
     /// </summary>
-    public class HandleAttendanceDataTimer:LeeTimerBase
+    public class HandleAttendanceDataTimer : LeeTimerBase
     {
         #region property 
         /// <summary>
@@ -196,6 +218,7 @@ namespace MesServices.Desktop.ViewModel
         public DateTime SlodCardDate { get; set; }
         AttendanceDataManger attendmanceDataManager = null;
         TimerTarget ttgt = null;
+
         //处理进度汇报句柄
         public Action<string> ReportProcessMsg { get; set; }
         #endregion

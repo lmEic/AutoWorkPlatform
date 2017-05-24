@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Lm.Eic.Uti.Common.YleeDbHandler;
 
-namespace Lm.Eic.AutoWorkProcess.Attendance
+namespace Lm.Eic.AutoWorkProcess.Attendance.DbAccess
 {
     /// <summary>
     ///当月刷卡数据模型
     /// </summary>
     [Serializable]
-    public partial class AttendSlodFingerDataCurrentMonthModel
+    public class AttendSlodFingerDataCurrentMonthModel
     {
         public AttendSlodFingerDataCurrentMonthModel()
         { }
@@ -164,8 +165,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     /// <summary>
     ///实时刷卡数据模型
     /// </summary>
-    [Serializable]
-    public partial class AttendFingerPrintDataInTimeModel
+    [LTableNameAttribute("Attendance_FingerPrintDataInTime")]
+    public class AttendFingerPrintDataInTimeModel
     {
         public AttendFingerPrintDataInTimeModel()
         { }
@@ -203,17 +204,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             set { _cardid = value; }
             get { return _cardid; }
-        }
-
-        private string _machineid;
-
-        /// <summary>
-        ///读取机器编号
-        /// </summary>
-        public string MachineId
-        {
-            set { _machineid = value; }
-            get { return _machineid; }
         }
         private string _cardtype;
 
@@ -265,7 +255,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     /// <summary>
     /// 作业人员信息
     /// </summary>
-    public partial class ArWorkerInfo
+    public class ArWorkerInfo
     {
         private string _identityid;
 
@@ -384,13 +374,43 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             }
         }
     }
+
+    public class ArEnrollUser
+    {
+        public int WorkerId { get; set; }
+
+        public string WorkerName { get; set; }
+
+        public string CardID { get; set; }
+    }
+
     /// <summary>
     /// 班别信息模型
     /// </summary>
-    public partial class ClassTypeModel
+    public class ClassTypeModel
     {
         public string WorkerId { get; set; }
 
         public string ClassType { get; set; }
+    }
+
+
+    public class DepartmentModel
+    {
+        /// <summary>
+        /// 名称
+        /// </summary>
+        public string DataNodeName { get; set; }
+        /// <summary>
+        /// 文本信息
+        /// </summary>
+        public string DataNodeText { get; set; }
+    }
+
+    public class WorkerChangeModel
+    {
+        public string OldWorkerId { get; set; }
+
+        public string NewWorkerId { get; set; }
     }
 }

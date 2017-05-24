@@ -41,14 +41,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attendance\AttendanceDataManger.cs" />
-    <Compile Include="Attendance\AttendanceMachineUpData.cs" />
-    <Compile Include="Attendance\AttendSlodFingerDataCurrentMonthModel.cs" />
-    <Compile Include="Attendance\WorkerManager.cs" />
+    <Compile Include="Attendance\DbAccess\AttendSlodFingerDataCurrentMonthDb.cs" />
+    <Compile Include="Attendance\Server\AttendanceBase.cs" />
+    <Compile Include="Attendance\Server\AttendanceDataManger.cs" />
+    <Compile Include="Attendance\Server\AttendanceExceptionDataManager.cs" />
+    <Compile Include="Attendance\Server\AttendanceMachineUpData.cs" />
+    <Compile Include="Attendance\DbAccess\AttendSlodFingerDataCurrentMonthModel.cs" />
+    <Compile Include="Attendance\DbAccess\WorkerManager.cs" />
     <Compile Include="ErrorMessageTracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Attendance\Client\" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lm.Eic.Uti.Common.YleeDbHandler\Lm.Eic.Uti.Common.YleeDbHandler\Lm.Eic.Uti.Common.YleeDbHandler.csproj">
       <Project>{8301c71a-afde-4853-8c05-39ff96b207c6}</Project>

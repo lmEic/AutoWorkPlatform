@@ -8,40 +8,52 @@ using Lm.Eic.Uti.Common.YleeDbHandler;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.IO;
 using Lm.Eic.AutoWorkProcess;
-namespace Lm.Eic.AutoWorkProcess.Attendance
+using Lm.Eic.AutoWorkProcess.Attendance.DbAccess;
+
+namespace Lm.Eic.AutoWorkProcess.Attendance.Server
 {
     /// <summary>
     /// 考勤数据处理器
     /// </summary>
-    public class AttendanceDataManger
+    public class AttendanceDataManger : AttendanceBase
     {
         /// <summary>
         /// 自动处理考勤数据
         /// </summary>
         public int AutoProcessAttendanceDatas(DateTime slotCardDate)
         {
+            Log("开始汇总考勤数据...");
             slotCardDate = slotCardDate.ToDate();
             //处理总记录数
             int totalRecord = 0, record = 0;
             //载入实时指纹考勤中的数据
-            var fingerPrintDatas = AttendFingerPrintDataHandler.LoadDatas(slotCardDate);
+            Log("载入实时指纹考勤中的数据...");
+            var fingerPrintDatas = AttendFingerPrintDataDbHandler.LoadDatas(slotCardDate);
             if (fingerPrintDatas == null || fingerPrintDatas.Count == 0) return totalRecord;
+            Log("备份考勤数据...");
+            BackupFingerDataDbHandler.BackupData(fingerPrintDatas);
             //载入汇总的考勤数据
-            var dayAttendDatas = AttendSlodFingerDataCurrentMonthHandler.LoadAttendanceDatas(slotCardDate);
+            Log("载入汇总的考勤数据...");
+            var dayAttendDatas = AttendSlodFingerDataCurrentMonthDbHandler.LoadAttendanceDatas(slotCardDate);
             //获取所有人员信息
-            var workers = WorkerManager.GetWorkerInfos();
-            var departments = AttendSlodFingerDataCurrentMonthHandler.GetDepartmentDatas();
+            Log("获取所有人员信息...");
+            var workers = WorkerDbManager.GetWorkerInfos();
+            var departments = AttendSlodFingerDataCurrentMonthDbHandler.GetDepartmentDatas();
             //中间时间
             DateTime middleTime = new DateTime(slotCardDate.Year, slotCardDate.Month, slotCardDate.Day, 13, 0, 0);
             ArWorkerInfo worker = null;
             //将考勤中数据中的人进行分组
+            Log("将考勤中数据中的人进行分组...");
             List<string> attendWorkerIdList = fingerPrintDatas.Select(e => e.WorkerId).Distinct().ToList();
             List<AttendFingerPrintDataInTimeModel> attendDataPerWorker = null;
             AttendSlodFingerDataCurrentMonthModel currentAttendData = null;
             ClassTypeModel ctm = null;
             DepartmentModel depm = null;
+            int progressIndex = 0;
+            Log("开始处理每个人的考勤数据...");
             attendWorkerIdList.ForEach(workerId =>
             {
+                progressIndex++;
                 record = 0;
                 //获取每个人的信息
                 worker = workers.FirstOrDefault(w => w.WorkerId == workerId);
@@ -51,13 +63,14 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     if (m != null)
                         worker = workers.FirstOrDefault(w => w.WorkerId == m.NewWorkerId);
                 }
+                LogProgressUser(progressIndex, "正在处理考勤数据，员工工号：", workerId);
                 //从实时考勤数据表中获取该员工的考勤数据
                 attendDataPerWorker = fingerPrintDatas.FindAll(f => f.WorkerId == workerId).OrderBy(o => o.SlodCardTime).ToList();
                 //从考勤中获取该员工的考勤数据
                 currentAttendData = dayAttendDatas.FirstOrDefault(e => e.WorkerId == workerId);//从内存中进行查找
                 if (worker != null)
                 {
-                    ctm = AttendSlodFingerDataCurrentMonthHandler.GetClassType(workerId, slotCardDate);
+                    ctm = AttendSlodFingerDataCurrentMonthDbHandler.GetClassType(workerId, slotCardDate);
                     depm = departments.FirstOrDefault(d => d.DataNodeName == worker.Department);
                     worker.ClassType = ctm == null ? "白班" : ctm.ClassType;
                     worker.Department = depm == null ? worker.Department : depm.DataNodeText;
@@ -79,9 +92,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                             record += MergeAttendTime(currentAttendData, attendance.SlodCardTime);
                         }
                     }
+                    LogProgress(string.Format("处理进度:len:{0}Vs record:{1}", len, record));
                     if (record == len)//如果处理记录与目标数量一致则进行备份数据
                     {
-                        AttendFingerPrintDataHandler.BackupData(attendDataPerWorker, record);
+                        LogProgressUser(progressIndex, "处理完毕，进行数据备份，员工工号：", workerId);
+                        AttendFingerPrintDataDbHandler.BackupData(attendDataPerWorker);
                         //从内存中移除数据，减少查询时间
                         //workers.Remove(worker);
                         //从内存中移除该人员的考勤数据，减少查询时间
@@ -92,13 +107,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 }
                 else
                 {
-                    AttendFingerPrintDataHandler.StoreNoIdentityWorkerInfo(attendDataPerWorker[0]);
+                    AttendFingerPrintDataDbHandler.StoreNoIdentityWorkerInfo(attendDataPerWorker[0]);
                 }
             });
+            Log("汇总完毕!");
             return totalRecord;
         }
-
-
         private WorkerChangeModel GetWorkerChangeInfo(string oldWorkerId)
         {
             string sql = string.Format("Select Top 1 OldWorkerId, WorkerName, NewWorkerId from Archives_WorkerIdChanged where OldWorkerId='{0}'", oldWorkerId);
@@ -169,7 +183,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             //直接进行更新替代
             string uSlotCardTime2 = slodCardTime.ToString("yyyy-MM-dd HH:mm");
             string uSlotCardTime = currentAttendData.SlotCardTime == null || currentAttendData.SlotCardTime.Length == 0 ? slodCardTime.ToString("HH:mm") : cardtime;
-            return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
+            return AttendSlodFingerDataCurrentMonthDbHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
         }
         /// <summary>
         /// 更新刷卡时间1
@@ -187,13 +201,13 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 string cardTimeStr = currentAttendData.AttendanceDate.ToDateStr() + " " + ctimes[ctimes.Count - 1];
                 string uSlotCardTime2 = cardTimeStr;
                 string uSlotCardTime = currentAttendData.SlotCardTime == null || currentAttendData.SlotCardTime.Length == 0 ? slodCardTime.ToString("HH:mm") : cardtime;
-                return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
+                return AttendSlodFingerDataCurrentMonthDbHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
             }
             else
             {
                 string uSlotCardTime1 = currentAttendData.SlotCardTime1 == null || currentAttendData.SlotCardTime1.Length == 0 ? slodCardTime.ToString("yyyy-MM-dd HH:mm") : currentAttendData.SlotCardTime1;
                 string uSlotCardTime = currentAttendData.SlotCardTime == null || currentAttendData.SlotCardTime.Length == 0 ? slodCardTime.ToString("HH:mm") : cardtime;
-                return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime1(uSlotCardTime, uSlotCardTime1, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
+                return AttendSlodFingerDataCurrentMonthDbHandler.UpdateSlotCardTime1(uSlotCardTime, uSlotCardTime1, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
             }
         }
 
@@ -214,7 +228,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 mdl.SlotCardTime2 = slodCardTime.ToString("yyyy-MM-dd HH:mm");
             else
                 mdl.SlotCardTime1 = slodCardTime.ToString("yyyy-MM-dd HH:mm");
-            record = AttendSlodFingerDataCurrentMonthHandler.Insert(mdl);
+            record = AttendSlodFingerDataCurrentMonthDbHandler.Insert(mdl);
             if (record == 1)
             {
                 initMdl = CreateAttendDataModel(attendTimeMdl, worker, slodCardTime);
@@ -280,11 +294,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         }
         #endregion
 
+
         #region Init Datas
 
         public void InitDatas()
         {
-            for (int day = 7; day <= 14; day++)
+            for (int day = 23; day <= 23; day++)
             {
                 DateTime dt = new DateTime(2017, 5, day, 0, 0, 0);
                 var datas = this.LoadDatas(dt);
@@ -292,7 +307,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 {
                     datas.ForEach(d =>
                     {
-                        if (AttendFingerPrintDataHandler.InsertDataTo(d) > 0)
+                        if (AttendFingerPrintDataDbHandler.InsertDataTo(d) > 0)
                         {
                             this.Delete(d);
                         }
@@ -301,8 +316,21 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 this.DeleteAttendanceDatas(dt);
                 this.AutoProcessAttendanceDatas(dt);
             }
-
         }
+        public void TestInsert()
+        {
+            ExceptionDataDbHandler.BackupAttendanceDataToFile(new AttendFingerPrintDataInTimeModel()
+            {
+                CardID = "123",
+                CardType = "345",
+                SlodCardDate = DateTime.Now,
+                SlodCardTime = DateTime.Now,
+                WorkerId = "003095",
+                WorkerName = "yanglei"
+            });
+            ExceptionDataDbHandler.PersistanceDataToServer();
+        }
+
         /// <summary>
         /// 按日期载入实时考勤数据
         /// </summary>
@@ -320,7 +348,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("Delete From Attendance_FingerPrintDataInTimeLib");
-            sb.AppendFormat("  where WorkerId='{0}' And SlodCardDate='{1}'", entity.WorkerId, entity.SlodCardDate);
+            sb.AppendFormat("  where WorkerId='{0}' And SlodCardTime='{1}'", entity.WorkerId, entity.SlodCardTime);
             return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
         }
         /// <summary>
@@ -336,182 +364,6 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         }
         #endregion
     }
-    /// <summary>
-    /// 考勤指纹数据处理器
-    /// </summary>
-    internal class AttendFingerPrintDataHandler
-    {
-        /// <summary>
-        /// 按日期载入实时考勤数据
-        /// </summary>
-        /// <param name="slotCardDate"></param>
-        /// <returns></returns>
-        internal static List<AttendFingerPrintDataInTimeModel> LoadDatas(DateTime slotCardDate)
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.Append("SELECT  WorkerId, WorkerName, CardID, CardType, SlodCardTime, SlodCardDate ");
-            sbSql.AppendFormat(" FROM Attendance_FingerPrintDataInTime where SlodCardDate='{0}'", slotCardDate);
-            return DbHelper.Hrm.LoadEntities<AttendFingerPrintDataInTimeModel>(sbSql.ToString());
-        }
-        /// <summary>
-        /// 删除数据
-        /// </summary>
-        /// <param name="entities"></param>
-        /// <param name="targetRecord"></param>
-        internal static void BackupData(List<AttendFingerPrintDataInTimeModel> entities, int targetRecord)
-        {
-            int record = 0;
-            entities.ForEach(entity => { record += InsertDataToLib(entity); });
-            if (record == targetRecord)
-            {
-                var mdl = entities[0];
-                Delete(mdl);
-            }
-        }
-        private static int InsertDataToLib(AttendFingerPrintDataInTimeModel entity)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("INSERT INTO Attendance_FingerPrintDataInTimeLib  (WorkerId,WorkerName,CardID,CardType,SlodCardTime,SlodCardDate)");
-            sb.AppendFormat(" values ('{0}',", entity.WorkerId);
-            sb.AppendFormat("'{0}',", entity.WorkerName);
-            sb.AppendFormat("'{0}',", entity.CardID);
-            sb.AppendFormat("'{0}',", entity.CardType);
-            sb.AppendFormat("'{0}',", entity.SlodCardTime);
-            sb.AppendFormat("'{0}')", entity.SlodCardDate);
-            return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
-        }
-        /// <summary>
-        /// 向考勤中插入指纹数据
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        internal static int InsertDataTo(AttendFingerPrintDataInTimeModel entity)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("INSERT INTO Attendance_FingerPrintDataInTime (WorkerId,WorkerName,CardID,CardType,SlodCardTime,SlodCardDate)");
-            sb.AppendFormat(" values ('{0}',", entity.WorkerId);
-            sb.AppendFormat("'{0}',", entity.WorkerName);
-            sb.AppendFormat("'{0}',", entity.CardID);
-            sb.AppendFormat("'{0}',", entity.CardType);
-            sb.AppendFormat("'{0}',", entity.SlodCardTime);
-            sb.AppendFormat("'{0}')", entity.SlodCardDate);
-            return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
-        }
-
-        private static int Delete(AttendFingerPrintDataInTimeModel entity)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("Delete From Attendance_FingerPrintDataInTime");
-            sb.AppendFormat("  where WorkerId='{0}' And SlodCardDate='{1}'", entity.WorkerId, entity.SlodCardDate);
-            return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
-        }
-
-        /// <summary>
-        /// 存储没有档案信息人员数据
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        internal static int StoreNoIdentityWorkerInfo(AttendFingerPrintDataInTimeModel entity)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("INSERT INTO Archives_ForgetInputWorkerInfo  (WorkerId,WorkerName,OpDate,OpTime)");
-            sb.AppendFormat(" values ('{0}',", entity.WorkerId);
-            sb.AppendFormat("'{0}',", entity.WorkerName);
-            sb.AppendFormat("'{0}',", DateTime.Now.ToDate());
-            sb.AppendFormat("'{0}')", DateTime.Now.ToDateTime());
-            return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
-        }
-    }
-    /// <summary>
-    /// 总考勤数据处理器
-    /// </summary>
-    internal class AttendSlodFingerDataCurrentMonthHandler
-    {
-        /// <summary>
-        /// 按日期载入当月考勤数据
-        /// </summary>
-        /// <param name="attendanceDate"></param>
-        /// <returns></returns>
-        internal static List<AttendSlodFingerDataCurrentMonthModel> LoadAttendanceDatas(DateTime attendanceDate)
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.Append("SELECT WorkerId, WorkerName, Department, ClassType, AttendanceDate, CardID, CardType, YearMonth, WeekDay,SlotCardTime1, SlotCardTime2, SlotCardTime ");
-            sbSql.AppendFormat(" FROM  Attendance_SlodFingerDataCurrentMonth where AttendanceDate='{0}'", attendanceDate);
-            return DbHelper.Hrm.LoadEntities<AttendSlodFingerDataCurrentMonthModel>(sbSql.ToString());
-        }
-        /// <summary>
-        /// 更改考勤时间2
-        /// </summary>
-        /// <param name="slodCardTime"></param>
-        /// <param name="slodCardTime2"></param>
-        /// <returns></returns>
-        internal static int UpdateSlotCardTime2(string slodCardTime, string slodCardTime2, string workerId, DateTime attendanceDate)
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.AppendFormat("Update Attendance_SlodFingerDataCurrentMonth set SlotCardTime2='{0}', SlotCardTime='{1}' where WorkerId='{2}' And AttendanceDate='{3}'", slodCardTime2, slodCardTime, workerId, attendanceDate);
-            return DbHelper.Hrm.ExecuteNonQuery(sbSql.ToString());
-        }
-        /// <summary>
-        /// 更改考勤时间1
-        /// </summary>
-        /// <param name="slodCardTime"></param>
-        /// <param name="slodCardTime1"></param>
-        /// <returns></returns>
-        internal static int UpdateSlotCardTime1(string slodCardTime, string slodCardTime1, string workerId, DateTime attendanceDate)
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.AppendFormat("Update Attendance_SlodFingerDataCurrentMonth set SlotCardTime1='{0}', SlotCardTime='{1}' where WorkerId='{2}' And AttendanceDate='{3}'", slodCardTime1, slodCardTime, workerId, attendanceDate);
-            return DbHelper.Hrm.ExecuteNonQuery(sbSql.ToString());
-        }
-        /// <summary>
-        /// 插入考勤数据
-        /// </summary>
-        /// <param name="mdl"></param>
-        /// <returns></returns>
-        internal static int Insert(AttendSlodFingerDataCurrentMonthModel mdl)
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.Append("Insert  Attendance_SlodFingerDataCurrentMonth (WorkerId, WorkerName, Department, ClassType, AttendanceDate, CardID, CardType, YearMonth, WeekDay,SlotCardTime1, SlotCardTime2, SlotCardTime) values (");
-            sbSql.AppendFormat("'{0}',", mdl.WorkerId);
-            sbSql.AppendFormat("'{0}',", mdl.WorkerName);
-            sbSql.AppendFormat("'{0}',", mdl.Department);
-            sbSql.AppendFormat("'{0}',", mdl.ClassType);
-            sbSql.AppendFormat("'{0}',", mdl.AttendanceDate);
-            sbSql.AppendFormat("'{0}',", mdl.CardID);
-            sbSql.AppendFormat("'{0}',", mdl.CardType);
-            sbSql.AppendFormat("'{0}',", mdl.YearMonth);
-            sbSql.AppendFormat("'{0}',", mdl.WeekDay);
-            sbSql.AppendFormat("'{0}',", mdl.SlotCardTime1);
-            sbSql.AppendFormat("'{0}',", mdl.SlotCardTime2);
-            sbSql.AppendFormat("'{0}')", mdl.SlotCardTime);
-            return DbHelper.Hrm.ExecuteNonQuery(sbSql.ToString());
-        }
-        /// <summary>
-        /// 获取班别信息
-        /// </summary>
-        /// <param name="workerId"></param>
-        /// <param name="attendanceDate"></param>
-        /// <returns></returns>
-        internal static ClassTypeModel GetClassType(string workerId, DateTime attendanceDate)
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.Append("SELECT WorkerId,ClassType FROM Attendance_ClassTypeDetail ");
-            sbSql.AppendFormat(" where WorkerId='{0}' And DateAt='{1}'", workerId, attendanceDate);
-            var datas = DbHelper.Hrm.LoadEntities<ClassTypeModel>(sbSql.ToString());
-            if (datas != null && datas.Count > 0) return datas.FirstOrDefault();
-            return null;
-        }
-        /// <summary>
-        /// 载入部门信息
-        /// </summary>
-        /// <returns></returns>
-        internal static List<DepartmentModel> GetDepartmentDatas()
-        {
-            StringBuilder sbSql = new StringBuilder();
-            sbSql.Append("SELECT DataNodeName, DataNodeText FROM  Config_DataDictionary where TreeModuleKey='Organization' And AboutCategory='HrDepartmentSet'");
-            return DbHelper.LmProductMaster.LoadEntities<DepartmentModel>(sbSql.ToString());
-        }
-    }
 
     /// <summary>
     /// 目标时间模型
@@ -522,23 +374,5 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         public int TMinute { get; set; }
         public int TStartSecond { get; set; }
         public int TEndSecond { get; set; }
-    }
-    public class DepartmentModel
-    {
-        /// <summary>
-        /// 名称
-        /// </summary>
-        public string DataNodeName { get; set; }
-        /// <summary>
-        /// 文本信息
-        /// </summary>
-        public string DataNodeText { get; set; }
-    }
-
-    public class WorkerChangeModel
-    {
-        public string OldWorkerId { get; set; }
-
-        public string NewWorkerId { get; set; }
     }
 }

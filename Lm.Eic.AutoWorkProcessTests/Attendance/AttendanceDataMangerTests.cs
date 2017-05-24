@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Lm.Eic.AutoWorkProcess.Attendance.Server;
 
 namespace Lm.Eic.AutoWorkProcess.Attendance.Tests
 {
@@ -14,10 +15,13 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Tests
         [TestMethod()]
         public void AutoProcessAttendanceDatasTest()
         {
-            AttendanceDataManger d = new Attendance.AttendanceDataManger();
+            AttendanceDataManger d = new AttendanceDataManger();
             //d.InitPostDatas();
             //am.InitDatas();
+
             d.InitDatas();
+
+            //d.TestInsert();
             Assert.Fail();
         }
 

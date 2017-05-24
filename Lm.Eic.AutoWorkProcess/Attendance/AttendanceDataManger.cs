@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Lm.Eic.Uti.Common.YleeDbHandler;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.IO;
+using Lm.Eic.AutoWorkProcess;
 namespace Lm.Eic.AutoWorkProcess.Attendance
 {
     /// <summary>
@@ -28,7 +29,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             //载入汇总的考勤数据
             var dayAttendDatas = AttendSlodFingerDataCurrentMonthHandler.LoadAttendanceDatas(slotCardDate);
             //获取所有人员信息
-            var workers = GetWorkerInfos();
+            var workers = WorkerManager.GetWorkerInfos();
             var departments = AttendSlodFingerDataCurrentMonthHandler.GetDepartmentDatas();
             //中间时间
             DateTime middleTime = new DateTime(slotCardDate.Year, slotCardDate.Month, slotCardDate.Day, 13, 0, 0);
@@ -39,7 +40,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             AttendSlodFingerDataCurrentMonthModel currentAttendData = null;
             ClassTypeModel ctm = null;
             DepartmentModel depm = null;
-            attendWorkerIdList.ForEach(workerId => {
+            attendWorkerIdList.ForEach(workerId =>
+            {
                 record = 0;
                 //获取每个人的信息
                 worker = workers.FirstOrDefault(w => w.WorkerId == workerId);
@@ -81,7 +83,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                     {
                         AttendFingerPrintDataHandler.BackupData(attendDataPerWorker, record);
                         //从内存中移除数据，减少查询时间
-                        workers.Remove(worker);
+                        //workers.Remove(worker);
                         //从内存中移除该人员的考勤数据，减少查询时间
                         attendDataPerWorker.ForEach(m => fingerPrintDatas.Remove(m));
                         totalRecord += record;
@@ -90,21 +92,17 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 }
                 else
                 {
-                   AttendFingerPrintDataHandler.StoreNoIdentityWorkerInfo(attendDataPerWorker[0]);
+                    AttendFingerPrintDataHandler.StoreNoIdentityWorkerInfo(attendDataPerWorker[0]);
                 }
             });
             return totalRecord;
         }
 
-        private List<ArWorkerInfo> GetWorkerInfos()
-        {
-            string sql = "Select IdentityID, WorkerId,Name,Post, PostNature,Organizetion, Department,ClassType,PersonalPicture from Archives_EmployeeIdentityInfo ";
-            return DbHelper.Hrm.LoadEntities<ArWorkerInfo>(sql);
-        }
+
         private WorkerChangeModel GetWorkerChangeInfo(string oldWorkerId)
         {
-            string sql =string.Format("Select Top 1 OldWorkerId, WorkerName, NewWorkerId from Archives_WorkerIdChanged where OldWorkerId='{0}'",oldWorkerId);
-            var datas= DbHelper.Hrm.LoadEntities<WorkerChangeModel>(sql);
+            string sql = string.Format("Select Top 1 OldWorkerId, WorkerName, NewWorkerId from Archives_WorkerIdChanged where OldWorkerId='{0}'", oldWorkerId);
+            var datas = DbHelper.Hrm.LoadEntities<WorkerChangeModel>(sql);
             if (datas != null && datas.Count > 0) return datas[0];
             return null;
         }
@@ -171,7 +169,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             //直接进行更新替代
             string uSlotCardTime2 = slodCardTime.ToString("yyyy-MM-dd HH:mm");
             string uSlotCardTime = currentAttendData.SlotCardTime == null || currentAttendData.SlotCardTime.Length == 0 ? slodCardTime.ToString("HH:mm") : cardtime;
-            return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId,currentAttendData.AttendanceDate);
+            return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
         }
         /// <summary>
         /// 更新刷卡时间1
@@ -189,13 +187,13 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 string cardTimeStr = currentAttendData.AttendanceDate.ToDateStr() + " " + ctimes[ctimes.Count - 1];
                 string uSlotCardTime2 = cardTimeStr;
                 string uSlotCardTime = currentAttendData.SlotCardTime == null || currentAttendData.SlotCardTime.Length == 0 ? slodCardTime.ToString("HH:mm") : cardtime;
-                return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId,currentAttendData.AttendanceDate);
+                return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime2(uSlotCardTime, uSlotCardTime2, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
             }
             else
             {
                 string uSlotCardTime1 = currentAttendData.SlotCardTime1 == null || currentAttendData.SlotCardTime1.Length == 0 ? slodCardTime.ToString("yyyy-MM-dd HH:mm") : currentAttendData.SlotCardTime1;
                 string uSlotCardTime = currentAttendData.SlotCardTime == null || currentAttendData.SlotCardTime.Length == 0 ? slodCardTime.ToString("HH:mm") : cardtime;
-                return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime1(uSlotCardTime, uSlotCardTime1, currentAttendData.WorkerId,currentAttendData.AttendanceDate);
+                return AttendSlodFingerDataCurrentMonthHandler.UpdateSlotCardTime1(uSlotCardTime, uSlotCardTime1, currentAttendData.WorkerId, currentAttendData.AttendanceDate);
             }
         }
 
@@ -242,23 +240,23 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             };
             return mdl;
         }
-    
+
         #region configuration
         /// <summary>
         /// 初始化配置文件
         /// </summary>
         public void InitConfigurationFile()
         {
-           var ttgt = new TimerTarget() { THour = 0, TEndSecond = 13, TMinute = 30, TStartSecond = 10 };
+            var ttgt = new TimerTarget() { THour = 0, TEndSecond = 13, TMinute = 30, TStartSecond = 10 };
             string filePath = @"C:\AutoProcessWorker\Configuration\";
             if (!Directory.Exists(filePath)) Directory.CreateDirectory(filePath);
             string fileName = filePath + "TimeSetCongig.xml";
             XElement root = new XElement("AutoPrecessWork",
-               new XAttribute(XNamespace.Xmlns + "xsi","lm"),
+               new XAttribute(XNamespace.Xmlns + "xsi", "lm"),
                new XAttribute(XNamespace.Xmlns + "eic", "eic"),
                new XAttribute("lmschemaLocation", "http://www.ieee.org/ATML/2007/TestResults TestResults.xsd"));
             XElement timeSet = new XElement("TimeSetConfig", new XElement("TimeSetter", new XAttribute("THour", ttgt.THour)
-                ,new XAttribute("TMinute",ttgt.TMinute),new XAttribute("TStartSecond",ttgt.TStartSecond),new XAttribute("TEndSecond",ttgt.TEndSecond)));
+                , new XAttribute("TMinute", ttgt.TMinute), new XAttribute("TStartSecond", ttgt.TStartSecond), new XAttribute("TEndSecond", ttgt.TEndSecond)));
 
             root.Add(timeSet);
             XDocument doc = new XDocument(new XDeclaration("1.0", "gb2312", ""), root);
@@ -271,9 +269,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             XDocument data = XDocument.Load(fileName);
             XElement root = data.Root;
             XElement timeSet = root.Descendants().FirstOrDefault().Descendants().FirstOrDefault();
-            TimerTarget tt = new TimerTarget() {
+            TimerTarget tt = new TimerTarget()
+            {
                 THour = timeSet.Attribute("THour").Value.ToInt(),
-                TMinute= timeSet.Attribute("TMinute").Value.ToInt(),
+                TMinute = timeSet.Attribute("TMinute").Value.ToInt(),
                 TStartSecond = timeSet.Attribute("TStartSecond").Value.ToInt(),
                 TEndSecond = timeSet.Attribute("TEndSecond").Value.ToInt(),
             };
@@ -285,14 +284,15 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         public void InitDatas()
         {
-            for (int day = 1; day <=15; day++)
+            for (int day = 7; day <= 14; day++)
             {
-                DateTime dt = new DateTime(2017, 2, day, 0, 0, 0);
+                DateTime dt = new DateTime(2017, 5, day, 0, 0, 0);
                 var datas = this.LoadDatas(dt);
                 if (datas != null && datas.Count > 0)
                 {
-                    datas.ForEach(d => {
-                        if (this.InsertDataTo(d)>0)
+                    datas.ForEach(d =>
+                    {
+                        if (AttendFingerPrintDataHandler.InsertDataTo(d) > 0)
                         {
                             this.Delete(d);
                         }
@@ -315,18 +315,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             sbSql.AppendFormat(" FROM Attendance_FingerPrintDataInTimeLib where SlodCardDate='{0}'", slotCardDate);
             return DbHelper.Hrm.LoadEntities<AttendFingerPrintDataInTimeModel>(sbSql.ToString());
         }
-        private int InsertDataTo(AttendFingerPrintDataInTimeModel entity)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("INSERT INTO Attendance_FingerPrintDataInTime (WorkerId,WorkerName,CardID,CardType,SlodCardTime,SlodCardDate)");
-            sb.AppendFormat(" values ('{0}',", entity.WorkerId);
-            sb.AppendFormat("'{0}',", entity.WorkerName);
-            sb.AppendFormat("'{0}',", entity.CardID);
-            sb.AppendFormat("'{0}',", entity.CardType);
-            sb.AppendFormat("'{0}',", entity.SlodCardTime);
-            sb.AppendFormat("'{0}')", entity.SlodCardDate);
-            return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
-        }
+
         private int Delete(AttendFingerPrintDataInTimeModel entity)
         {
             StringBuilder sb = new StringBuilder();
@@ -391,12 +380,29 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             sb.AppendFormat("'{0}')", entity.SlodCardDate);
             return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
         }
+        /// <summary>
+        /// 向考勤中插入指纹数据
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        internal static int InsertDataTo(AttendFingerPrintDataInTimeModel entity)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("INSERT INTO Attendance_FingerPrintDataInTime (WorkerId,WorkerName,CardID,CardType,SlodCardTime,SlodCardDate)");
+            sb.AppendFormat(" values ('{0}',", entity.WorkerId);
+            sb.AppendFormat("'{0}',", entity.WorkerName);
+            sb.AppendFormat("'{0}',", entity.CardID);
+            sb.AppendFormat("'{0}',", entity.CardType);
+            sb.AppendFormat("'{0}',", entity.SlodCardTime);
+            sb.AppendFormat("'{0}')", entity.SlodCardDate);
+            return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
+        }
 
         private static int Delete(AttendFingerPrintDataInTimeModel entity)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("Delete From Attendance_FingerPrintDataInTime");
-            sb.AppendFormat("  where WorkerId='{0}' And SlodCardDate='{1}'", entity.WorkerId,entity.SlodCardDate);
+            sb.AppendFormat("  where WorkerId='{0}' And SlodCardDate='{1}'", entity.WorkerId, entity.SlodCardDate);
             return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
         }
 
@@ -410,8 +416,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             StringBuilder sb = new StringBuilder();
             sb.Append("INSERT INTO Archives_ForgetInputWorkerInfo  (WorkerId,WorkerName,OpDate,OpTime)");
             sb.AppendFormat(" values ('{0}',", entity.WorkerId);
-            sb.AppendFormat("'{0}')", entity.WorkerName);
-            sb.AppendFormat("'{0}')", DateTime.Now.ToDate());
+            sb.AppendFormat("'{0}',", entity.WorkerName);
+            sb.AppendFormat("'{0}',", DateTime.Now.ToDate());
             sb.AppendFormat("'{0}')", DateTime.Now.ToDateTime());
             return DbHelper.Hrm.ExecuteNonQuery(sb.ToString());
         }
@@ -439,10 +445,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <param name="slodCardTime"></param>
         /// <param name="slodCardTime2"></param>
         /// <returns></returns>
-        internal static int UpdateSlotCardTime2(string slodCardTime,string slodCardTime2,string workerId,DateTime attendanceDate)
+        internal static int UpdateSlotCardTime2(string slodCardTime, string slodCardTime2, string workerId, DateTime attendanceDate)
         {
             StringBuilder sbSql = new StringBuilder();
-            sbSql.AppendFormat("Update Attendance_SlodFingerDataCurrentMonth set SlotCardTime2='{0}', SlotCardTime='{1}' where WorkerId='{2}' And AttendanceDate='{3}'", slodCardTime2, slodCardTime, workerId,attendanceDate);
+            sbSql.AppendFormat("Update Attendance_SlodFingerDataCurrentMonth set SlotCardTime2='{0}', SlotCardTime='{1}' where WorkerId='{2}' And AttendanceDate='{3}'", slodCardTime2, slodCardTime, workerId, attendanceDate);
             return DbHelper.Hrm.ExecuteNonQuery(sbSql.ToString());
         }
         /// <summary>
@@ -451,7 +457,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <param name="slodCardTime"></param>
         /// <param name="slodCardTime1"></param>
         /// <returns></returns>
-        internal static int UpdateSlotCardTime1(string slodCardTime, string slodCardTime1,string workerId, DateTime attendanceDate)
+        internal static int UpdateSlotCardTime1(string slodCardTime, string slodCardTime1, string workerId, DateTime attendanceDate)
         {
             StringBuilder sbSql = new StringBuilder();
             sbSql.AppendFormat("Update Attendance_SlodFingerDataCurrentMonth set SlotCardTime1='{0}', SlotCardTime='{1}' where WorkerId='{2}' And AttendanceDate='{3}'", slodCardTime1, slodCardTime, workerId, attendanceDate);
@@ -490,7 +496,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             StringBuilder sbSql = new StringBuilder();
             sbSql.Append("SELECT WorkerId,ClassType FROM Attendance_ClassTypeDetail ");
-            sbSql.AppendFormat(" where WorkerId='{0}' And DateAt='{1}'",workerId, attendanceDate);
+            sbSql.AppendFormat(" where WorkerId='{0}' And DateAt='{1}'", workerId, attendanceDate);
             var datas = DbHelper.Hrm.LoadEntities<ClassTypeModel>(sbSql.ToString());
             if (datas != null && datas.Count > 0) return datas.FirstOrDefault();
             return null;

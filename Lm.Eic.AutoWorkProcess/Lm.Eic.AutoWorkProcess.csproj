@@ -44,6 +44,8 @@
     <Compile Include="Attendance\AttendanceDataManger.cs" />
     <Compile Include="Attendance\AttendanceMachineUpData.cs" />
     <Compile Include="Attendance\AttendSlodFingerDataCurrentMonthModel.cs" />
+    <Compile Include="Attendance\WorkerManager.cs" />
+    <Compile Include="ErrorMessageTracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

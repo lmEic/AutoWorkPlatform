@@ -7,7 +7,7 @@ using Lm.Eic.Uti.Common.YleeTimer;
 using Lm.Eic.Uti.Common.YleeMessage.Windows;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.Threading;
-
+using Lm.Eic.AutoWorkProcess;
 
 namespace MesServices.Desktop.ViewModel
 {
@@ -16,7 +16,7 @@ namespace MesServices.Desktop.ViewModel
     /// </summary>
     public class AttendanceProcesserViewModel : ViewModelBase
     {
-        #region property 
+        #region property
         HandleAttendanceDataTimer timer = null;
         AttendanceUpSynchronous attendmanceMachineDataManager = null;
         DateTime _SlodCardDate = DateTime.Now;
@@ -124,8 +124,6 @@ namespace MesServices.Desktop.ViewModel
                     this.ProcessMessage = msg;
                 }
             };
-
-            //实例化考勤机上传数据
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous()
             {
 
@@ -134,9 +132,8 @@ namespace MesServices.Desktop.ViewModel
                     this.MachineUpdateMsg = msgList;
                 }
             };
-
         }
-         
+
         #region command
 
         /// <summary>
@@ -164,9 +161,6 @@ namespace MesServices.Desktop.ViewModel
 
             }
         }
-
-
-        #region  考勤 
         /// <summary>
         /// 考勤机械上传数据
         /// </summary>
@@ -178,30 +172,28 @@ namespace MesServices.Desktop.ViewModel
             }
         }
 
-        
 
         private void ProcessAttendanceMachineData(object o)
         {
-            
-            if (this.AttendanceMachineUpDataText == "考勤机服务器启动")
+            try
             {
-                this.AttendanceMachineUpDataText = "考勤机服务器停止";
+                if (this.AttendanceMachineUpDataText == "考勤机服务器启动")
+                {
+                    this.AttendanceMachineUpDataText = "考勤机服务器停止";
+                    attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
+                }
+                else
+                {
+                    this.AttendanceMachineUpDataText = "考勤机服务器启动";
+                    attendmanceMachineDataManager.ClosingAttendanceUpSynchronous();
 
-                attendmanceMachineDataManager.OpenAttendanceUpSynchronous();
-
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                this.AttendanceMachineUpDataText = "考勤机服务器启动";
-
-                attendmanceMachineDataManager.ClosingAttendanceUpSynchronous();
-
+                ErrorMessageTracer.LogErrorMsgToFile("", ex);
             }
         }
-
-        #endregion
-
-
 
         #endregion
 
@@ -211,16 +203,17 @@ namespace MesServices.Desktop.ViewModel
     /// </summary>
     public class HandleAttendanceDataTimer : LeeTimerBase
     {
-        #region property 
+        #region property
         /// <summary>
         /// 刷卡日期
         /// </summary>
         public DateTime SlodCardDate { get; set; }
         AttendanceDataManger attendmanceDataManager = null;
         TimerTarget ttgt = null;
-
         //处理进度汇报句柄
         public Action<string> ReportProcessMsg { get; set; }
+
+        private bool IsStart = true;
         #endregion
 
         public HandleAttendanceDataTimer()
@@ -236,11 +229,22 @@ namespace MesServices.Desktop.ViewModel
             ReportProcessMsg("");
             DateTime d = DateTime.Now;
             int m = d.Minute, h = d.Hour, s = d.Second;
-            if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond)
+            if (!IsStart) return;
+            if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond && IsStart)
             {
                 if (ReportProcessMsg != null)
                     ReportProcessMsg("开始汇总...");
-                this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
+                try
+                {
+                    IsStart = false;
+                    this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
+                    IsStart = true;
+                }
+                catch (System.Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+
                 if (ReportProcessMsg != null)
                     ReportProcessMsg("汇总结束!");
             }

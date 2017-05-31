@@ -83,7 +83,7 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
         /// <param name="emailToname"></param>
         /// <param name="tableString"></param>
         /// <returns></returns>
-        private string SendTemplateMail(string templetPath, string emailToname,string tableString)
+       public  string SendTemplateMail(string templetPath, string emailToname,string tableString)
         {
             string mailBody = string.Empty;
             bool isExist = File.Exists(templetPath);

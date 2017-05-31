@@ -9,7 +9,7 @@ namespace Lm.Eic.Uti.Common.YleeTimer
     {
         protected Timer leeTimer;
         //是否启动计时器
-        protected bool isStart = false;
+        protected bool isStart = true;
         /// <summary>
         /// 计时器监控句柄
         /// </summary>

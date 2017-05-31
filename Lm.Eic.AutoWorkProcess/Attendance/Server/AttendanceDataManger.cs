@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using System.Threading.Tasks;
 using Lm.Eic.Uti.Common.YleeDbHandler;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
+using Lm.Eic.Uti.Common.YleeMessage.Email;
 using System.IO;
 using Lm.Eic.AutoWorkProcess;
 using Lm.Eic.AutoWorkProcess.Attendance.DbAccess;
@@ -295,11 +296,78 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
         #endregion
 
 
+        #region handle exception method
+        /// <summary>
+        /// 获取异常数据
+        /// </summary>
+        /// <param name="attendanceDatas"></param>
+        /// <returns></returns>
+        private List<AttendSlodFingerDataCurrentMonthModel> GetAttendanceExceptionData(List<AttendSlodFingerDataCurrentMonthModel> attendanceDatas)
+        {
+            List<AttendSlodFingerDataCurrentMonthModel> attendanceExceptionDatas = new List<AttendSlodFingerDataCurrentMonthModel>();
+            if (attendanceDatas == null || attendanceDatas.Count == 0) return attendanceExceptionDatas;
+            attendanceDatas.ForEach(d =>
+            {
+                if (string.IsNullOrEmpty(d.SlotCardTime1) || string.IsNullOrEmpty(d.SlotCardTime2))
+                    attendanceExceptionDatas.Add(d);
+            });
+            return attendanceExceptionDatas;
+        }
+        /// <summary>
+        /// 输出异常信息
+        /// </summary>
+        /// <returns></returns>
+        private string OutputAttendanceExceptionMessage(List<AttendSlodFingerDataCurrentMonthModel> attendanceExceptionDatas)
+        {
+            if (attendanceExceptionDatas == null || attendanceExceptionDatas.Count == 0) return string.Empty;
+            StringBuilder sbMessage = new StringBuilder();
+            sbMessage.Append("<table border=\"1\">")
+                .AppendFormat("<caption>{0}日异常考勤数据汇总</caption>", DateTime.Now.ToDateStr())
+                .Append("<thead><tr>")
+                .Append("<th>部门</th>").Append("<th>工号</th>").Append("<th>姓名</th>")
+                .Append("<th>时间1</th>").Append("<th>时间2</th>").Append("</tr></th>")
+                .Append("<tbody>");
+            attendanceExceptionDatas.ForEach(aed =>
+            {
+                sbMessage.Append("<tr>")
+                         .AppendFormat("<td>{0}</td>", aed.Department)
+                         .AppendFormat("<td>{0}</td>", aed.WorkerId)
+                         .AppendFormat("<td>{0}</td>", aed.WorkerName)
+                         .AppendFormat("<td>{0}</td>", string.IsNullOrEmpty(aed.SlotCardTime1) ? "" : aed.SlotCardTime1)
+                         .AppendFormat("<td>{0}</td>", string.IsNullOrEmpty(aed.SlotCardTime1) ? "" : aed.SlotCardTime2)
+                         .Append("</tr>").AppendLine();
+            });
+            sbMessage.AppendLine("</tbody>")
+                     .AppendLine("</table>");
+            return sbMessage.ToString();
+        }
+        /// <summary>
+        /// 将异常数据信息通知给各单位主管
+        /// </summary>
+        private void NotifyToManager(DateTime attendanceDate, List<AttendSlodFingerDataCurrentMonthModel> attendanceExceptionDatas)
+        {
+            StringBuilder sbMessage = new StringBuilder();
+            try
+            {
+                sbMessage.Append(OutputAttendanceExceptionMessage(attendanceExceptionDatas)).AppendLine()
+               .AppendLine("说明：此邮件为系统发送邮件，请勿回复！！");
+                MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() { "ylei@ezconn.cn" });
+                mailMsg.Subject = $"{attendanceDate.ToDateStr()}日异常考勤数据汇总数据";
+                mailMsg.Body = sbMessage.ToString();
+                EmailMessageNotification.EmailNotifier.SendMail(mailMsg);
+            }
+            catch (System.Exception ex)
+            {
+                ErrorMessageTracer.LogErrorMsgToFile("NotifyToManager", ex);
+            }
+        }
+        #endregion
+
         #region Init Datas
 
         public void InitDatas()
         {
-            for (int day = 23; day <= 23; day++)
+            for (int day = 27; day <= 27; day++)
             {
                 DateTime dt = new DateTime(2017, 5, day, 0, 0, 0);
                 var datas = this.LoadDatas(dt);
@@ -319,16 +387,16 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
         }
         public void TestInsert()
         {
-            ExceptionDataDbHandler.BackupAttendanceDataToFile(new AttendFingerPrintDataInTimeModel()
-            {
-                CardID = "123",
-                CardType = "345",
-                SlodCardDate = DateTime.Now,
-                SlodCardTime = DateTime.Now,
-                WorkerId = "003095",
-                WorkerName = "yanglei"
-            });
-            ExceptionDataDbHandler.PersistanceDataToServer();
+            List<AttendSlodFingerDataCurrentMonthModel> attendanceExceptionDatas = new List<AttendSlodFingerDataCurrentMonthModel>() {
+                new AttendSlodFingerDataCurrentMonthModel() { Department="EIC", WorkerId="003095",WorkerName="杨磊" },
+                new AttendSlodFingerDataCurrentMonthModel() { Department="EIC", WorkerId="001359",WorkerName="万晓桥" },
+            };
+
+            string msg = OutputAttendanceExceptionMessage(attendanceExceptionDatas);
+            MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() { "ylei@ezconn.cn", "wxq520@ezconn.cn" });
+            mailMsg.Subject = $"{DateTime.Now.ToDateStr()}日异常考勤数据汇总数据";
+            mailMsg.Body = msg;
+            EmailMessageNotification.EmailNotifier.SendMail(mailMsg);
         }
 
         /// <summary>

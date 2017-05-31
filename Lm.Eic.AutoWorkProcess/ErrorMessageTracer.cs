@@ -5,11 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Lm.Eic.Uti.Common.YleeExtension.FileOperation;
 using System.IO;
+using Lm.Eic.Uti.Common.YleeMessage.Email;
 
 namespace Lm.Eic.AutoWorkProcess
 {
     /// <summary>
-    /// 错误信息跟踪器
+    /// 消息跟踪器
     /// </summary>
     public static class ErrorMessageTracer
     {
@@ -64,5 +65,22 @@ namespace Lm.Eic.AutoWorkProcess
             return false;
         }
 
+    }
+    /// <summary>
+    /// Email消息通知器
+    /// </summary>
+    public static class EmailMessageNotification
+    {
+        /// <summary>
+        /// 邮件通知器
+        /// </summary>
+        public static MailHelper EmailNotifier
+        {
+            get
+            {
+                MailHelper mailHelper = new MailHelper(new SmtpConfig("smtp.exmail.qq.com", 25, "wxq520@ezconn.cn", "wxQ52866414"));
+                return mailHelper;
+            }
+        }
     }
 }

@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Lm.Eic.Uti.Common.YleeExtension.FileOperation;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -119,7 +122,7 @@ namespace Lm.Eic.Uti.Common.YleeDbHandler
             Type entityType = typeof(TEntity);
 
             Dictionary<string, PropertyInfo> dic = new Dictionary<string, PropertyInfo>();
-            PropertyInfo[] pts=entityType.GetProperties();
+            PropertyInfo[] pts = entityType.GetProperties();
             foreach (PropertyInfo info in pts)
             {
                 dic.Add(info.Name, info);
@@ -570,10 +573,10 @@ namespace Lm.Eic.Uti.Common.YleeDbHandler
 
         private string GetTableNameFromSql(string sql)
         {
-            int start = sql.ToUpper().IndexOf("FROM") + 4;
+            int start = sql.ToUpper().IndexOf("FROM", StringComparison.CurrentCulture) + 4;
             string subsql = sql.Substring(start, sql.Length - start).Trim();
 
-            int whereIndex = sql.ToUpper().IndexOf("WHERE");
+            int whereIndex = sql.ToUpper().IndexOf("WHERE", StringComparison.CurrentCulture);
             if (whereIndex > 0)
             {
                 return sql.Substring(start, whereIndex - start).Trim();
@@ -704,8 +707,259 @@ namespace Lm.Eic.Uti.Common.YleeDbHandler
         }
 
         #endregion ExcuteNonQuery
+
+
+
+        #region Insert
+        private string GetTableNameFrom<TEntity>(TEntity entity)
+        {
+            string tableName = string.Empty;
+            Type tity = entity.GetType();
+            var attribute = tity.GetCustomAttributes(typeof(LTableNameAttribute), false).FirstOrDefault();
+            if (attribute == null) return tableName;
+            tableName = ((LTableNameAttribute)attribute).TableName;
+            return tableName;
+        }
+        /// <summary>
+        /// 插入实体数据模型
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="entity">实体模型</param>
+        /// <param name="tableName">表名称</param>
+        /// <returns></returns>
+        public int Insert<TEntity>(TEntity entity, string tableName)
+        {
+            int record = 0;
+            StringBuilder sbFields = new StringBuilder();
+            StringBuilder sbFieldValues = new StringBuilder();
+            string sql = string.Format("Insert into {0} (", tableName);
+            try
+            {
+                Type tity = entity.GetType();
+                PropertyInfo[] Pis = tity.GetProperties();
+                if (Pis.Length > 0)
+                {
+                    foreach (PropertyInfo pi in Pis)
+                    {
+                        if (pi.Name.ToUpper() == "ENTITYSTATE" || pi.Name.ToUpper() == "ENTITYKEY" || pi.Name.ToUpper() == "ID_KEY")
+                        { }
+                        else
+                        {
+                            sbFields.Append(pi.Name.Trim() + ",");
+                            object piProxyValue = pi.GetValue(entity, null);
+                            sbFieldValues.AppendFormat("'{0}',", piProxyValue);
+                        }
+                    }
+                    sql = string.Format("{0}{1}) values ({2})", sql, sbFields.ToString().TrimEnd(','), sbFieldValues.ToString().TrimEnd(','));
+                    return ExecuteNonQuery(sql);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.ToString());
+            }
+            return record;
+        }
+        /// <summary>
+        /// 将实体模型映射为字典对象插入数据库中
+        /// 字典中需要包含表的名称
+        /// </summary>
+        /// <param name="datas"></param>
+        /// <returns></returns>
+        public int Insert(Dictionary<string, object> datas)
+        {
+            int record = 0;
+            string tblNameKey = "leeTableName";
+            if (!datas.ContainsKey(tblNameKey))
+            {
+                ErrorMessageTracer.LogMsgToFile("Insert(Dictionary<string, object> datas)", "字典中没有表名称的键值信息");
+                return record;
+            }
+            string tableName = datas[tblNameKey].ToString().Trim();
+            StringBuilder sbFields = new StringBuilder();
+            StringBuilder sbFieldValues = new StringBuilder();
+            string sql = string.Format("Insert into {0} (", tableName);
+            try
+            {
+                if (datas.Count > 0)
+                {
+                    foreach (string key in datas.Keys)
+                    {
+                        if (key.ToUpper() == "ENTITYSTATE" || key.ToUpper() == "ENTITYKEY" || key.ToUpper() == "ID_KEY" || key.ToUpper() == "LEETABLENAME")
+                        { }
+                        else
+                        {
+                            sbFields.Append(key.Trim() + ",");
+                            object piProxyValue = datas[key];
+                            sbFieldValues.AppendFormat("'{0}',", piProxyValue);
+                        }
+                    }
+                    sql = string.Format("{0}{1}) values ({2})", sql, sbFields.ToString().TrimEnd(','), sbFieldValues.ToString().TrimEnd(','));
+                    return ExecuteNonQuery(sql);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessageTracer.LogErrorMsgToFile("Insert(Dictionary<string, object> datas)", ex);
+            }
+            return record;
+        }
+        /// <summary>
+        /// 插入实体数据模型,表名称从特性标注中获取，需要用特性的方式进行指定
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="entity">实体模型</param>
+        /// <returns></returns>
+        public int Insert<TEntity>(TEntity entity)
+        {
+            string tableName = GetTableNameFrom(entity);
+            return Insert<TEntity>(entity, tableName);
+        }
+        #endregion
     }
 
+    /// <summary>
+    /// 将对象持久化到文件中，
+    /// 从文件中读取数据持久化到数据库中
+    /// 整个操作只根据实体模型进行
+    /// </summary>
+    public class FileDbHelper
+    {
+        private static string GetTableNameFrom<TEntity>(TEntity entity)
+        {
+            string tableName = string.Empty;
+            Type tity = entity.GetType();
+            var attribute = tity.GetCustomAttributes(typeof(LTableNameAttribute), false).FirstOrDefault();
+            if (attribute == null) return tableName;
+            tableName = ((LTableNameAttribute)attribute).TableName;
+            return tableName;
+        }
+        /// <summary>
+        /// 从文件中读取内容转换为实体字典对象,包含表的名称
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static List<Dictionary<string, object>> GetEntityDicFromTxtFile(string filePath)
+        {
+            List<Dictionary<string, object>> listDatas = new List<Dictionary<string, object>>();
+            if (!File.Exists(filePath))
+            {
+                ErrorMessageTracer.LogMsgToFile("GetEntityDicFromTxtFile", string.Format("{0}不存在！", filePath));
+                return listDatas;
+            }
+            try
+            {
+                using (StreamReader sr = new StreamReader(filePath, Encoding.Default))
+                {
+                    Dictionary<string, object> dataDic = null;
+                    string line = sr.ReadLine();
+                    string[] tblFields = line.Split(':');
+                    if (tblFields.Length != 2)
+                    {
+                        ErrorMessageTracer.LogMsgToFile("GetEntityDicFromTxtFile", "文件中没有包含表名称的信息");
+                        return listDatas;
+                    }
+                    if (tblFields[0].ToString().ToUpper() != "LEETABLENAME")
+                    {
+                        ErrorMessageTracer.LogMsgToFile("GetEntityDicFromTxtFile", "文件中没有包含表名称键值的信息");
+                        return listDatas;
+                    }
+                    string tblKey = tblFields[0].ToString().Trim();
+                    string tblName = tblFields[1].ToString().Trim();
+                    while (!string.IsNullOrEmpty(line))
+                    {
+                        line = sr.ReadLine();
+                        string[] fieldPair = line.Split(',');
+                        if (fieldPair.Length > 0)
+                        {
+                            dataDic = new Dictionary<string, object>();
+                            dataDic.Add(tblKey, tblName);
+                            foreach (string fp in fieldPair)
+                            {
+                                string[] fv = fp.Split('*');
+                                if (fv.Length == 2)
+                                {
+                                    dataDic.Add(fv[0].Trim(), fv[1].Trim());
+                                }
+                            }
+                            listDatas.Add(dataDic);
+                        }
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ErrorMessageTracer.LogErrorMsgToFile("GetEntityDicFromFile", ex);
+            }
+            return listDatas;
+        }
+        /// <summary>
+        /// 将实体模型数据添加到文件中，文件中会记录实体模型对应的表名称
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="entity"></param>
+        /// <param name="filePath"></param>
+        public static void AppendFile<TEntity>(TEntity entity, string filePath) where TEntity : class, new()
+        {
+            try
+            {
+                Type tity = entity.GetType();
+                PropertyInfo[] Pis = tity.GetProperties();
+                if (Pis.Length > 0)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    string tableName = GetTableNameFrom<TEntity>(entity);
+                    if (!File.Exists(filePath))
+                        sb.AppendLine(string.Format("leeTableName:{0}", tableName));
+                    foreach (PropertyInfo pi in Pis)
+                    {
+                        if (pi.Name.ToUpper() == "ENTITYSTATE" || pi.Name.ToUpper() == "ENTITYKEY" || pi.Name.ToUpper() == "ID_KEY")
+                        { }
+                        else
+                        {
+                            object piProxyValue = pi.GetValue(entity, null);
+                            sb.AppendFormat("{0}*{1},", pi.Name, piProxyValue);
+                        }
+                    }
+                    filePath.AppendFile(sb.ToString().TrimEnd(','));
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessageTracer.LogErrorMsgToFile("AppendFile<TEntity>", ex);
+            }
+        }
+    }
+
+
+    [System.AttributeUsage(AttributeTargets.Class)]
+    public class LTableNameAttribute : Attribute
+    {
+        private string tableName;
+        /// <summary>
+        /// 模型映射表的名字
+        /// </summary>
+        public string TableName
+        {
+            get { return tableName; }
+        }
+
+        public LTableNameAttribute(string tablename)
+        {
+            this.tableName = tablename;
+        }
+    }
+    [System.AttributeUsage(AttributeTargets.Property)]
+    public class LTableFieldLengthAttribute : Attribute
+    {
+        private int fieldLength;
+        public int FieldLength { get; set; }
+
+        public LTableFieldLengthAttribute(int fieldlength)
+        {
+            this.fieldLength = fieldlength;
+        }
+    }
     /// <summary>
     /// 表的字段信息
     /// </summary>

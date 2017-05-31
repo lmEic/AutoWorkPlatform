@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ErrorMessageTracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="YleeExcelHanlder\ExcelHelper.cs" />
     <Compile Include="YleeExcelHanlder\NPOIHelper.cs" />
@@ -73,7 +74,7 @@
     <Compile Include="YleeFtp\FtpConnectPassport.cs" />
     <Compile Include="YleeFtp\FtpOperator.cs" />
     <Compile Include="YleeFtp\FtpOpreateDirectoryPath.cs" />
-    <Compile Include="YleeMessage\Email\EmailMessageHelper.cs" />
+    <Compile Include="YleeMessage\Email\MailHelper.cs" />
     <Compile Include="YleeMessage\Windows\WinMessageHelper.cs" />
     <Compile Include="YleeObjectBuilder\OBulider.cs" />
     <Compile Include="YleeOOMapper\OpResult.cs" />

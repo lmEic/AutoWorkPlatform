@@ -8,6 +8,9 @@ using Lm.Eic.Uti.Common.YleeMessage.Windows;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.Threading;
 using Lm.Eic.AutoWorkProcess;
+using System.Windows;
+using System.Collections.ObjectModel;
+using Lm.Eic.AutoWorkProcess.Attendance.Server;
 
 namespace MesServices.Desktop.ViewModel
 {
@@ -18,27 +21,8 @@ namespace MesServices.Desktop.ViewModel
     {
         #region property
         HandleAttendanceDataTimer timer = null;
+        HandleAttendanceExceptionDataTimer exceptionTimer = null;
         AttendanceUpSynchronous attendmanceMachineDataManager = null;
-        DateTime _SlodCardDate = DateTime.Now;
-        /// <summary>
-        /// 刷卡日期
-        /// </summary>
-        public DateTime SlodCardDate
-        {
-            get
-            {
-                return _SlodCardDate;
-            }
-            set
-            {
-                if (_SlodCardDate != value)
-                {
-                    _SlodCardDate = value;
-                    OnPropertyChanged("SlodCardDate");
-                }
-            }
-        }
-
         string _AutoHandleCommandText = "启动自动处理";
         public string AutoHandleCommandText
         {
@@ -91,11 +75,11 @@ namespace MesServices.Desktop.ViewModel
         }
 
 
-        List<string> _machineUpdateMsg = new List<string>() { "上传数据" };
+        ObservableCollection<string> _machineUpdateMsg = new ObservableCollection<string>() { "等待读取考勤数据..." };
         /// <summary>
         /// 考勤机上传数据
         /// </summary>
-        public List<string> MachineUpdateMsg
+        public ObservableCollection<string> MachineUpdateMsg
         {
             get
             {
@@ -112,24 +96,39 @@ namespace MesServices.Desktop.ViewModel
         }
         #endregion
 
-
+        /// <summary>
+        /// 创建应用程序
+        /// </summary>
+        private void CreateApp()
+        {
+            if (Application.Current == null)
+            {
+                Application app = new Application();
+                app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            }
+        }
 
         public AttendanceProcesserViewModel()
         {
-            this.timer = new ViewModel.HandleAttendanceDataTimer()
+            CreateApp();
+            this.timer = new HandleAttendanceDataTimer();
+            this.timer.AttendmanceDataManager.MessageReportHandler = msg =>
             {
-                ReportProcessMsg = msg =>
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    this.SlodCardDate = DateTime.Now.ToDate();
                     this.ProcessMessage = msg;
-                }
+                }));
             };
+            this.exceptionTimer = new HandleAttendanceExceptionDataTimer();
+
             this.attendmanceMachineDataManager = new AttendanceUpSynchronous()
             {
-
                 ReportUpdataMsg = msgList =>
                 {
-                    this.MachineUpdateMsg = msgList;
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        this.MachineUpdateMsg = new ObservableCollection<string>(msgList);
+                    }));
                 }
             };
         }
@@ -148,16 +147,18 @@ namespace MesServices.Desktop.ViewModel
         }
         private void ProcessAttendanceData(object o)
         {
-            timer.SlodCardDate = this.SlodCardDate;
             if (this.AutoHandleCommandText == "启动自动处理")
             {
                 this.AutoHandleCommandText = "停止自动处理";
                 timer.Start();
+
+                exceptionTimer.Start();
             }
             else
             {
                 this.AutoHandleCommandText = "启动自动处理";
                 timer.Stop();
+                exceptionTimer.Stop();
 
             }
         }
@@ -204,51 +205,73 @@ namespace MesServices.Desktop.ViewModel
     public class HandleAttendanceDataTimer : LeeTimerBase
     {
         #region property
-        /// <summary>
-        /// 刷卡日期
-        /// </summary>
-        public DateTime SlodCardDate { get; set; }
-        AttendanceDataManger attendmanceDataManager = null;
+        public AttendanceDataManger AttendmanceDataManager { get; private set; }
         TimerTarget ttgt = null;
-        //处理进度汇报句柄
-        public Action<string> ReportProcessMsg { get; set; }
-
-        private bool IsStart = true;
         #endregion
 
         public HandleAttendanceDataTimer()
         {
-            this.InitTimer(1000);
-            this.attendmanceDataManager = new AttendanceDataManger();
-            this.ttgt = this.attendmanceDataManager.LoadTimerSetConfigInfo();
+            this.InitTimer(10000);
+            this.AttendmanceDataManager = new AttendanceDataManger();
+            this.ttgt = this.AttendmanceDataManager.LoadTimerSetConfigInfo();
         }
 
         #region method
+        private void AutoHandleAttendanceData()
+        {
+            isStart = false;
+            DateTime slodCardDate = DateTime.Now.AddDays(-1);
+            this.AttendmanceDataManager.AutoProcessAttendanceDatas(slodCardDate);
+            isStart = true;
+        }
+
         protected override void TimerWatcherHandler()
         {
-            ReportProcessMsg("");
+
             DateTime d = DateTime.Now;
             int m = d.Minute, h = d.Hour, s = d.Second;
-            if (!IsStart) return;
-            if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond && IsStart)
+            if (!isStart) return;
+            if (h == ttgt.THour && m == ttgt.TMinute && s > ttgt.TStartSecond && s < ttgt.TEndSecond && isStart)
             {
-                if (ReportProcessMsg != null)
-                    ReportProcessMsg("开始汇总...");
                 try
                 {
-                    IsStart = false;
-                    this.attendmanceDataManager.AutoProcessAttendanceDatas(this.SlodCardDate.AddDays(-1));
-                    IsStart = true;
+                    AutoHandleAttendanceData();
                 }
                 catch (System.Exception ex)
                 {
-                    throw new Exception(ex.Message);
+                    ErrorMessageTracer.LogErrorMsgToFile("TimerWatcherHandler", ex);
                 }
-
-                if (ReportProcessMsg != null)
-                    ReportProcessMsg("汇总结束!");
             }
         }
         #endregion
+    }
+    /// <summary>
+    /// 考勤数据定时处理器
+    /// </summary>
+    public class HandleAttendanceExceptionDataTimer : LeeTimerBase
+    {
+        public HandleAttendanceExceptionDataTimer()
+        {
+            this.InitTimer(1000);
+        }
+        protected override void TimerWatcherHandler()
+        {
+            DateTime d = DateTime.Now;
+            int m = d.Minute, s = d.Second;
+            if (!isStart) return;
+            if (m == 30 && s > 1 && s < 19 && isStart)
+            {
+                try
+                {
+                    isStart = false;
+                    AttendanceExceptionDataManager.AutoHandleAttendanceExceptionData();
+                    isStart = true;
+                }
+                catch (System.Exception ex)
+                {
+                    ErrorMessageTracer.LogErrorMsgToFile("TimerWatcherHandler", ex);
+                }
+            }
+        }
     }
 }

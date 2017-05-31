@@ -13,8 +13,9 @@ using Lm.Eic.Uti.Common.YleeExtension.FileOperation;
 using Lm.Eic.Uti.Common.YleeExtension.Conversion;
 using System.IO;
 using Lm.Eic.AutoWorkProcess;
+using Lm.Eic.AutoWorkProcess.Attendance.DbAccess;
 
-namespace Lm.Eic.AutoWorkProcess.Attendance
+namespace Lm.Eic.AutoWorkProcess.Attendance.Server
 {
     /// <summary>
     /// 时间日志回调
@@ -29,7 +30,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
     internal delegate Boolean AdminLogCallback
         (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
         DateTime LogTime, Int64 AdminID, Int64 UserID,
-        String Action,
+        String action,
         Int32 Result);
     internal delegate Boolean TimeLogCallback
         (String TerminalType, Int32 TerminalID, String SerialNumber, Int32 TransactionID,
@@ -52,6 +53,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         public AlarmLogCallback m_AlarmLogCallBack = null;
         public PingCallback m_PingCallBack = null;
 
+        private static bool isColsed;
         public AttendanceUpdateLogServer(UInt16 portNo,
             TimeLogCallback timeLogCallback,
             AdminLogCallback adminLogCallback,
@@ -62,6 +64,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             {
                 // Initialize objects.
                 m_Disposed = false;
+                isColsed = false;
+
                 m_PortNo = portNo;
                 m_TimeLogCallBack = timeLogCallback;
                 m_AdminLogCallBack = adminLogCallback;
@@ -98,6 +102,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 return;
 
             m_Disposed = true;
+            isColsed = true;
 
             if (dispose)
             {
@@ -133,6 +138,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             try
             {
                 // Establish connection and add a terminal into the list.
+                if (term.m_Disposed || isColsed == true) return;//如果对象已经释放，则退出
                 term.EstablishConnect(server.m_Listner.EndAcceptTcpClient(iar));
                 m_TerminalList.AddLast(term);
                 // For disposed listener.
@@ -157,6 +163,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         public Byte[] m_RxBuffer;
         public int m_RxCount;
 
+        private static bool isClose = false;
+
         private const int MaxMessageSize = 2048 + 8 * 1024 * 2;     // Maximum message size // 18K
         private const int PingTimeout = 30 * 1000;  // Ping timeout
 
@@ -171,6 +179,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 return;
 
             m_Disposed = true;
+            isClose = true;
 
             if (disposing)
             {
@@ -178,8 +187,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 m_TimerAlive.Change(Timeout.Infinite, Timeout.Infinite);
                 try
                 {
-                    m_Stream.Close();
-                    m_Client.Close();
+                    if (m_Stream != null)
+                        m_Stream.Close();
+                    if (m_Client != null)
+                        m_Client.Close();
                 }
                 catch (Exception ex)
                 {
@@ -200,6 +211,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         {
             // Initialize objects.
             m_Disposed = false;
+            isClose = false;
 
             m_TimeLogCallBack = timeLogCallback;
             m_AdminLogCallBack = adminLogCallback;
@@ -249,7 +261,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             AttendanceUpdateTerminal term = (AttendanceUpdateTerminal)iar.AsyncState;
             try
             {
-                term.m_Stream.EndWrite(iar);
+                if (!isClose)
+                    term.m_Stream.EndWrite(iar);
             }
             catch (Exception ex)
             {
@@ -258,7 +271,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         }
 
         // Check message is end
-        private static Boolean CheckMessageEnd(Byte c)
+        private Boolean CheckMessageEnd(Byte c)
         {
             return (c == 0);
         }
@@ -659,12 +672,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             ///尝试读取 如果读取错误 清除Term 重新读取
             try
             {
-                if (term == null) return;
-
+                if (term == null || term.m_Stream == null || isClose == true) return;
                 recieved = term.m_Stream.EndRead(iar);
                 if (recieved <= 0)
-                    throw new Exception("connection closed");
-
+                    return;
                 if (recieved > MaxMessageSize - term.m_RxCount)
                     recieved = MaxMessageSize - term.m_RxCount;
 
@@ -729,17 +740,28 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <summary>
         /// 所有用户列表
         /// </summary>
-        //private List<AttendFingerPrintDataInTimeModel> AllUserList = new List<AttendFingerPrintDataInTimeModel>();
-        private List<ArWorkerInfo> userList = null;
-        private ArWorkerInfo GetUser(long userId)
+        private List<ArEnrollUser> userList = null;
+        private ArEnrollUser GetUser(long userId)
         {
             if (userList == null || userList.Count == 0)
-                userList = WorkerManager.GetWorkerInfos();
-            ArWorkerInfo user = userList.FirstOrDefault(e => e.WorkerId == userId.ToString().PadLeft(6, '0'));
+                userList = WorkerDbManager.GetEnrollUsers();
+            ArEnrollUser user = userList.FirstOrDefault(e => e.WorkerId == userId);
             if (user == null)
             {
-                userList = WorkerManager.GetWorkerInfos();
-                user = userList.FirstOrDefault(e => e.WorkerId == userId.ToString().PadLeft(6, '0'));
+                userList = WorkerDbManager.GetEnrollUsers();
+                user = userList.FirstOrDefault(e => e.WorkerId == userId);
+                if (user == null)
+                {
+                    var userInfo = WorkerDbManager.GetWorkerInfos().FirstOrDefault(e => e.WorkerId == userId.ToString().PadLeft(6, '0'));
+                    if (userInfo != null)
+                    {
+                        user = new ArEnrollUser() { WorkerId = userInfo.WorkerId.ToInt(), WorkerName = userInfo.Name };
+                    }
+                    else
+                    {
+                        user = WorkerDbManager.GetUserFromChangeInfo(int.Parse(userId.ToString()));
+                    }
+                }
             }
             return user;
         }
@@ -750,19 +772,23 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         /// <param name="anVerifyMode"></param>
         /// <param name="anLogDate"></param>
         /// <param name="astrSerialNo"></param>
-        private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo)
+        private bool Add_FingerPrintDataInTime(long UserID, string anVerifyMode, DateTime anLogDate, string astrSerialNo, out string errMsg)
         {
+            errMsg = "";
             try
             {
                 bool returnBool = false;
                 var user = GetUser(UserID);
-                if (user == null) return false;
+                if (user == null)
+                {
+                    errMsg = "没有找到用户的注册信息";
+                    return false;
+                }
                 var m = new AttendFingerPrintDataInTimeModel();
-                m.WorkerId = user.WorkerId;
-                m.WorkerName = user.Name;
-                m.CardID = user.CardID;
-                if (astrSerialNo == null) m.MachineId = string.Empty;
-                m.MachineId = astrSerialNo;
+                m.WorkerId = user.WorkerId.ToString().PadLeft(6, '0');
+                m.WorkerName = user.WorkerName;
+                if (astrSerialNo == null) m.CardID = string.Empty;
+                m.CardID = astrSerialNo;
                 switch (anVerifyMode)
                 {
                     case "FP":
@@ -784,12 +810,18 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 m.SlodCardTime = anLogDate;
                 m.SlodCardDate = anLogDate.Date;
                 if (anVerifyMode == "FP" || anVerifyMode == "Face")
-                    returnBool = AttendFingerPrintDataHandler.InsertDataTo(m) > 0;
+                    returnBool = AttendFingerPrintDataDbHandler.InsertDataTo(m) > 0;
+                else
+                {
+                    errMsg = "不是指纹或者脸的考勤数据";
+                    returnBool = false;
+                }
                 return returnBool;
             }
             catch (Exception ex)
             {
                 ErrorMessageTracer.LogErrorMsgToFile("Add_FingerPrintDataInTime", ex);
+                errMsg = ex.Message;
                 return false;
             }
         }
@@ -800,33 +832,28 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
         public Boolean OnTimeLog(String terminalType, Int32 terminalID, String serialNumber, Int32 transactionID, DateTime logTime,
             Int64 userID, Int32 doorID, String attendanceStatus, String verifyMode, Int32 jobCode, String antipass, Byte[] photo)
         {
-            String msg;
+            StringBuilder sbmsg = new StringBuilder();
             try
             {
-                msg = "[" + terminalType + ":";
-                msg += terminalID.ToString();
-                msg += " MachineID=" + serialNumber + "] ";
-                msg += "TimeLog";
-                msg += "(" + transactionID.ToString() + ") ";
-                msg += logTime.ToString() + ", ";
-                msg += "UserID=" + String.Format("{0}, ", userID);
-                msg += "Door=" + doorID.ToString() + ", ";
-                msg += "AttendStat=" + attendanceStatus + ", ";
-                msg += "VMode=" + verifyMode + ", ";
-                msg += "JobCode=" + jobCode.ToString() + ", ";
-                msg += "Antipass=" + antipass + ", ";
+                sbmsg.AppendFormat("日志：[{0}:{1} MachineID={2}]", terminalType, terminalID, serialNumber)
+                     .AppendFormat("Operation=TimeLog,({0}),OpTime={1},UserID={2},Door={3}，", transactionID, logTime, userID, doorID)
+                     .AppendFormat("AttendState={0},VMode={1},JobCode={2},", attendanceStatus, verifyMode, jobCode)
+                     .AppendFormat("Antipass={0}", antipass);
                 if (photo == null)
-                    msg += "Photo=No";
+                    sbmsg.Append("Photo=No");
                 else
                 {
-                    msg += "Photo=Yes ";
-                    msg += "(" + Convert.ToString(photo.Length) + "bytes)";
+                    sbmsg.Append("Photo=Yes ");
+                    sbmsg.Append("(" + photo.Length.ToString() + "bytes)");
                 }
-                if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber))
+                string errMsg = string.Empty;
+                if (!Add_FingerPrintDataInTime(userID, verifyMode, logTime, serialNumber, out errMsg))
                 {
+                    sbmsg.AppendLine(errMsg);
                     string fileName = @"C:\AutoProcessWorker\Log\" + logTime.ToDateStr() + ".txt";
-                    fileName.AppendFile(msg);
+                    fileName.AppendFile(sbmsg.ToString());
                 }
+                string msg = sbmsg.ToString();
                 RetrunShowInfo(msg);
                 return true;
             }
@@ -847,7 +874,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 msg = "[" + terminalType + ":";
                 msg += terminalID.ToString();
                 msg += " MachineId=" + serialNumber + "] ";
-                msg += "AdminLog";
+                msg += "Operation=AdminLog";
                 msg += "(" + transactionID.ToString() + ") ";
                 msg += logTime.ToString() + ", ";
                 msg += "AdminID=" + String.Format("{0}, ", adminID);
@@ -873,7 +900,7 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
                 msg = "[" + terminalType + ":";
                 msg += terminalID.ToString();
                 msg += " SN=" + serialNumber + "] ";
-                msg += "AlarmLog";
+                msg += "Opeartion=AlarmLog";
                 msg += "(" + transactionID.ToString() + ") ";
                 msg += logTime.ToString() + ", ";//'at'
                 msg += "UserID=" + String.Format("{0}, ", userID);
@@ -895,7 +922,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
             {
                 String msg = "[" + terminalType + ":";
                 msg += terminalID.ToString();
-                msg += " SN=" + serialNumber + "] ";
+                msg += " Operation=Ping";
+                msg += " MachineID=" + serialNumber + "] ";
                 msg += "KeepAlive";
                 msg += "(" + transactionID.ToString() + ") ";
                 RetrunShowInfo(msg);
@@ -909,11 +937,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance
 
         private void RetrunShowInfo(string msg)
         {
-            if (msgList.Count >= 100)
+            if (msgList.Count >= 20 || msgList.Count >= 20)
             {
                 msgList.Clear();
                 rowId = 0;
                 msgSblist.Clear();
+                return;
             }
             rowId += 1;
             msgList.Add(new MsgCell() { RowId = rowId, Msg = msg });

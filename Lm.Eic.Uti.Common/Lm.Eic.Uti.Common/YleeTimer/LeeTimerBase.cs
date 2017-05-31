@@ -8,7 +8,8 @@ namespace Lm.Eic.Uti.Common.YleeTimer
     public abstract class LeeTimerBase
     {
         protected Timer leeTimer;
-
+        //是否启动计时器
+        protected bool isStart = true;
         /// <summary>
         /// 计时器监控句柄
         /// </summary>

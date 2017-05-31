@@ -18,10 +18,8 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Tests
             AttendanceDataManger d = new AttendanceDataManger();
             //d.InitPostDatas();
             //am.InitDatas();
-
-            d.InitDatas();
-
-            //d.TestInsert();
+            //d.InitDatas();
+            d.TestInsert();
             Assert.Fail();
         }
 

@@ -92,7 +92,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
         {
             CleanUp(false);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dispose"></param>
         private void CleanUp(bool dispose)
         {
             if (m_Disposed)

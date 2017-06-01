@@ -54,6 +54,19 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
                 ErrorMessageTracer.LogErrorMsgToFile("SendMail", ex);
             }
         }
+        public void sendHaveTemplateMail(string templatePath,MailMsg mailMsg)
+        {
+            MailMessage msg = CreateHaveTemplateMailMessage(templatePath,mailMsg);
+            if (msg == null) return;
+            try
+            {
+                this.SmtpClient.Send(msg);
+            }
+            catch (SmtpException ex)
+            {
+                ErrorMessageTracer.LogErrorMsgToFile("SendMail", ex);
+            }
+        }
 
         /// <summary>
         /// 发送邮件
@@ -122,6 +135,49 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
 
             msg.Subject = mailMsg.Subject;
             msg.Body = mailMsg.Body;
+            msg.IsBodyHtml = mailMsg.IsBodyHtml;
+
+            msg.BodyEncoding = mailMsg.BodyEncoding;
+            msg.SubjectEncoding = mailMsg.SubjectEncoding;
+            return msg;
+        }
+        private MailMessage CreateHaveTemplateMailMessage(string templatePath,MailMsg mailMsg)
+        {
+            MailMessage msg = null;
+            if (!MailValiator.IsEmail(mailMsg.AddressFrom.Address))
+            {
+                ErrorMessageTracer.LogMsgToFile("CreateMailMessage", string.Format("{0}邮箱输入错误", mailMsg.AddressFrom.Address));
+                return msg;
+            }
+            msg = new MailMessage();
+            MailAddress ma = null;
+            msg.From = mailMsg.AddressFrom;
+            mailMsg.AddressTo.ToList().ForEach(to =>
+            {
+                ValidateAddress(to, msg.To);
+            });
+            if (mailMsg.BccAddress != null)
+                mailMsg.BccAddress.ForEach(bcc =>
+                {
+                    ma = new MailAddress(bcc);
+                    ValidateAddress(ma, msg.Bcc);
+                });
+            if (mailMsg.CC != null)
+                mailMsg.CC.ForEach(c =>
+                {
+                    ma = new MailAddress(c);
+                    ValidateAddress(ma, msg.CC);
+                });
+
+            if (mailMsg.Priority == 0)
+                msg.Priority = MailPriority.Normal;
+            else if (mailMsg.Priority == 1)
+                msg.Priority = MailPriority.High;
+            else
+                msg.Priority = MailPriority.Low;
+
+            msg.Subject = mailMsg.Subject;
+            msg.Body = MailTemplateHelper.SendTemplateMail(templatePath, mailMsg.Body);
             msg.IsBodyHtml = mailMsg.IsBodyHtml;
 
             msg.BodyEncoding = mailMsg.BodyEncoding;

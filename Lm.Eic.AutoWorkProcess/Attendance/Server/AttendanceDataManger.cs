@@ -393,10 +393,12 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
             };
 
             string msg = OutputAttendanceExceptionMessage(attendanceExceptionDatas);
-            MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() { "ylei@ezconn.cn", "wxq520@ezconn.cn" });
+            MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() {"wxq520@ezconn.cn" });
             mailMsg.Subject = $"{DateTime.Now.ToDateStr()}日异常考勤数据汇总数据";
             mailMsg.Body = msg;
-            EmailMessageNotification.EmailNotifier.SendMail(mailMsg);
+            string templatePath = @"C:\LightMasterTemplate.html";
+            EmailMessageNotification.EmailNotifier.sendHaveTemplateMail(templatePath, mailMsg);
+            //EmailMessageNotification.EmailNotifier.SendMail(mailMsg);
         }
 
         /// <summary>

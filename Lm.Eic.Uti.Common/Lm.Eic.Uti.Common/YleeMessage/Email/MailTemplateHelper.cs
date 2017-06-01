@@ -53,7 +53,8 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
             string template = string.Empty;
             try
             {
-                reader = new StreamReader(templatePath);
+                FileStream fs = new FileStream(templatePath, FileMode.Open, FileAccess.Read);
+                reader = new StreamReader(fs, Encoding.Default);
                 template = reader.ReadToEnd();
                 reader.Close();
                 if (values != null)
@@ -81,16 +82,16 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
         /// <param name="toName">发送人昵称</param>
         /// <param name="tableString">表格</param>
         /// <returns></returns>
-       public  string SendTemplateMail(string templetPath, string toName,string tableString)
+       public static string SendTemplateMail(string templetPath, string tableString)
         {
             string mailBody = string.Empty;
             bool isExist = File.Exists(templetPath);
-            if (!string.IsNullOrEmpty(toName)&& isExist)
+            if (isExist)
             {
                 try
                 {
                     NameValueCollection myCol = new NameValueCollection();
-                    myCol.Add("Name", toName);
+                    myCol.Add("Name", "各部门主管:");
                     myCol.Add("Table", tableString);
                     mailBody =BulidByFile(templetPath, myCol);
                     return mailBody;

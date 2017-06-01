@@ -267,7 +267,8 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
             else
             {
                 bool result = EmailRegex.IsMatch(input);
-                ErrorMessageTracer.LogMsgToFile("IsEmail", $"{input}为非法邮箱名");
+                if (!result)
+                    ErrorMessageTracer.LogMsgToFile("IsEmail", $"{input}为非法邮箱名");
                 return result;
             }
         }

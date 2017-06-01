@@ -78,7 +78,7 @@ namespace Lm.Eic.AutoWorkProcess
         {
             get
             {
-                MailHelper mailHelper = new MailHelper(new SmtpConfig("smtp.exmail.qq.com", 25, "wxq520@ezconn.cn", "wxQ52866414"));
+                MailHelper mailHelper = new MailHelper(new SmtpConfig("smtp.exmail.qq.com", 25, "softwareadmin@ezconn.cn", "EIc2017"));
                 return mailHelper;
             }
         }

@@ -404,11 +404,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
             };
 
             string msg = OutputAttendanceExceptionMessage(attendanceExceptionDatas);
-            MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() {"wxq520@ezconn.cn" });
+            MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() {"wanxiaoqiao888@163.com","wxq520@ezconn.cn" });
             mailMsg.Subject = $"{DateTime.Now.ToDateStr()}日异常考勤数据汇总数据";
             mailMsg.Body = msg;
             string templatePath = @"C:\LightMasterTemplate.html";
-            EmailMessageNotification.EmailNotifier.sendHaveTemplateMail(templatePath, mailMsg);
+            EmailMessageNotification.EmailNotifier.sendHaveTemplateMail(mailMsg,templatePath);
             //EmailMessageNotification.EmailNotifier.SendMail(mailMsg);
         }
 

@@ -54,9 +54,12 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
                 ErrorMessageTracer.LogErrorMsgToFile("SendMail", ex);
             }
         }
-        public void sendHaveTemplateMail(string templatePath,MailMsg mailMsg)
+        public void sendHaveTemplateMail(MailMsg mailMsg, string templatePath=null)
         {
-            MailMessage msg = CreateHaveTemplateMailMessage(templatePath,mailMsg);
+            MailMessage msg = null;
+            if (templatePath != null)
+                msg = CreateHaveTemplateMailMessage(mailMsg, templatePath);
+            else msg = CreateMailMessage(mailMsg);
             if (msg == null) return;
             try
             {
@@ -141,7 +144,7 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
             msg.SubjectEncoding = mailMsg.SubjectEncoding;
             return msg;
         }
-        private MailMessage CreateHaveTemplateMailMessage(string templatePath,MailMsg mailMsg)
+        private MailMessage CreateHaveTemplateMailMessage(MailMsg mailMsg, string templatePath )
         {
             MailMessage msg = null;
             if (!MailValiator.IsEmail(mailMsg.AddressFrom.Address))

@@ -82,9 +82,9 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
         /// <param name="toName">发送人昵称</param>
         /// <param name="tableString">表格</param>
         /// <returns></returns>
-       public static string SendTemplateMail(string templetPath, string tableString)
+       public static string SendTemplateMail(string templetPath, string mailBody)
         {
-            string mailBody = string.Empty;
+            string returnmailBody = mailBody;
             bool isExist = File.Exists(templetPath);
             if (isExist)
             {
@@ -92,16 +92,16 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
                 {
                     NameValueCollection myCol = new NameValueCollection();
                     myCol.Add("Name", "各部门主管:");
-                    myCol.Add("Table", tableString);
-                    mailBody =BulidByFile(templetPath, myCol);
-                    return mailBody;
+                    myCol.Add("Table", mailBody);
+                    returnmailBody = BulidByFile(templetPath, myCol);
+                    return returnmailBody;
                 }
                 catch (Exception ex)
                 {
                     ErrorMessageTracer.LogErrorMsgToFile("SendTemplateMail", ex);
                 }
             }
-            return mailBody;
+            return returnmailBody;
 
 
         }

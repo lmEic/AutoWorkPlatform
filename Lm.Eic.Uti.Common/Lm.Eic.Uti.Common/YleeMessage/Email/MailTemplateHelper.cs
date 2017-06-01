@@ -11,7 +11,7 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
  public    class MailTemplateHelper
     {
         /// <summary>
-        /// 加载模板
+        /// 加载模板 [$   ] 所为标识
         /// </summary>
         /// <param name="templatePath">模板路经</param>
         /// <param name="values">变化的值</param>
@@ -64,10 +64,8 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
                     }
                 }
             }
-            catch
-            {
-
-            }
+            catch (Exception ex)
+            { ErrorMessageTracer.LogErrorMsgToFile("SendTemplateMail Reader Template", ex); }
             finally
             {
                 if (reader != null)
@@ -77,22 +75,22 @@ namespace Lm.Eic.Uti.Common.YleeMessage.Email
         }
 
         /// <summary>
-        /// 
+        ///   发送人表格  关键字 Name Table
         /// </summary>
-        /// <param name="templetpath"></param>
-        /// <param name="emailToname"></param>
-        /// <param name="tableString"></param>
+        /// <param name="templetpath">模板路劲</param>
+        /// <param name="toName">发送人昵称</param>
+        /// <param name="tableString">表格</param>
         /// <returns></returns>
-       public  string SendTemplateMail(string templetPath, string emailToname,string tableString)
+       public  string SendTemplateMail(string templetPath, string toName,string tableString)
         {
             string mailBody = string.Empty;
             bool isExist = File.Exists(templetPath);
-            if (!string.IsNullOrEmpty(emailToname)&& isExist)
+            if (!string.IsNullOrEmpty(toName)&& isExist)
             {
                 try
                 {
                     NameValueCollection myCol = new NameValueCollection();
-                    myCol.Add("Name", emailToname);
+                    myCol.Add("Name", toName);
                     myCol.Add("Table", tableString);
                     mailBody =BulidByFile(templetPath, myCol);
                     return mailBody;

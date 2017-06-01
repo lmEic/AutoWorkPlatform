@@ -308,9 +308,10 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
             if (attendanceDatas == null || attendanceDatas.Count == 0) return attendanceExceptionDatas;
             attendanceDatas.ForEach(d =>
             {
-                if (string.IsNullOrEmpty(d.SlotCardTime1) || string.IsNullOrEmpty(d.SlotCardTime2))
+                if ((string.IsNullOrEmpty(d.SlotCardTime1) && d.ClassType != "晚班") || string.IsNullOrEmpty(d.SlotCardTime2))
                     attendanceExceptionDatas.Add(d);
             });
+            attendanceExceptionDatas = attendanceExceptionDatas.OrderBy(o => o.Department).ToList();
             return attendanceExceptionDatas;
         }
         /// <summary>
@@ -322,20 +323,23 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
             if (attendanceExceptionDatas == null || attendanceExceptionDatas.Count == 0) return string.Empty;
             StringBuilder sbMessage = new StringBuilder();
             sbMessage.Append("<table border=\"1\">")
-                .AppendFormat("<caption>{0}日异常考勤数据汇总</caption>", DateTime.Now.ToDateStr())
-                .Append("<thead><tr>")
+                .AppendFormat("<caption>{0}日异常考勤数据汇总</caption>", attendanceExceptionDatas.FirstOrDefault().AttendanceDate.ToDateStr())
+                .Append("<thead><tr>").Append("<th>Id</th>")
                 .Append("<th>部门</th>").Append("<th>工号</th>").Append("<th>姓名</th>")
                 .Append("<th>时间1</th>").Append("<th>时间2</th>").Append("</tr></th>")
                 .Append("<tbody>");
+            int id = 1;
             attendanceExceptionDatas.ForEach(aed =>
             {
                 sbMessage.Append("<tr>")
+                         .AppendFormat("<td>{0}</td>", id)
                          .AppendFormat("<td>{0}</td>", aed.Department)
                          .AppendFormat("<td>{0}</td>", aed.WorkerId)
                          .AppendFormat("<td>{0}</td>", aed.WorkerName)
                          .AppendFormat("<td>{0}</td>", string.IsNullOrEmpty(aed.SlotCardTime1) ? "" : aed.SlotCardTime1)
-                         .AppendFormat("<td>{0}</td>", string.IsNullOrEmpty(aed.SlotCardTime1) ? "" : aed.SlotCardTime2)
+                         .AppendFormat("<td>{0}</td>", string.IsNullOrEmpty(aed.SlotCardTime2) ? "" : aed.SlotCardTime2)
                          .Append("</tr>").AppendLine();
+                id++;
             });
             sbMessage.AppendLine("</tbody>")
                      .AppendLine("</table>");
@@ -344,14 +348,17 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
         /// <summary>
         /// 将异常数据信息通知给各单位主管
         /// </summary>
-        private void NotifyToManager(DateTime attendanceDate, List<AttendSlodFingerDataCurrentMonthModel> attendanceExceptionDatas)
+        public void NotifyToManager(DateTime attendanceDate)
         {
             StringBuilder sbMessage = new StringBuilder();
+            List<string> emailList = WorkerDbManager.GetUserEmails(); //new List<string>() { "wxq520@ezconn.cn", "lyh@ezconn.cn", "cecilia@ezconn.cn", "ylei@ezconn.cn" };
             try
             {
-                sbMessage.Append(OutputAttendanceExceptionMessage(attendanceExceptionDatas)).AppendLine()
-               .AppendLine("说明：此邮件为系统发送邮件，请勿回复！！");
-                MailMsg mailMsg = new MailMsg("wxq520@ezconn.cn", new List<string>() { "ylei@ezconn.cn" });
+                var datas = AttendSlodFingerDataCurrentMonthDbHandler.LoadAttendanceDatas(attendanceDate);
+                datas = GetAttendanceExceptionData(datas);
+                sbMessage.Append(OutputAttendanceExceptionMessage(datas)).AppendLine()
+               .AppendLine("说明：此邮件为系统自动发送邮件，请勿回复！！如有疑问，请联系人事管理人员。");
+                MailMsg mailMsg = new MailMsg("softwareadmin@ezconn.cn", emailList);
                 mailMsg.Subject = $"{attendanceDate.ToDateStr()}日异常考勤数据汇总数据";
                 mailMsg.Body = sbMessage.ToString();
                 EmailMessageNotification.EmailNotifier.SendMail(mailMsg);
@@ -367,22 +374,26 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.Server
 
         public void InitDatas()
         {
-            for (int day = 27; day <= 27; day++)
+            for (int day = 30; day <= 31; day++)
             {
                 DateTime dt = new DateTime(2017, 5, day, 0, 0, 0);
-                var datas = this.LoadDatas(dt);
-                if (datas != null && datas.Count > 0)
-                {
-                    datas.ForEach(d =>
-                    {
-                        if (AttendFingerPrintDataDbHandler.InsertDataTo(d) > 0)
-                        {
-                            this.Delete(d);
-                        }
-                    });
-                }
-                this.DeleteAttendanceDatas(dt);
-                this.AutoProcessAttendanceDatas(dt);
+                //var datas = this.LoadDatas(dt);
+                //if (datas != null && datas.Count > 0)
+                //{
+                //    datas.ForEach(d =>
+                //    {
+                //        if (AttendFingerPrintDataDbHandler.InsertDataTo(d) > 0)
+                //        {
+                //            this.Delete(d);
+                //        }
+                //    });
+                //}
+                //this.DeleteAttendanceDatas(dt);
+                //this.AutoProcessAttendanceDatas(dt);
+
+
+
+                NotifyToManager(dt);
             }
         }
         public void TestInsert()

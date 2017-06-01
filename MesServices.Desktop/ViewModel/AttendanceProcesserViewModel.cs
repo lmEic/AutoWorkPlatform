@@ -112,7 +112,7 @@ namespace MesServices.Desktop.ViewModel
         {
             CreateApp();
             this.timer = new HandleAttendanceDataTimer();
-            this.timer.AttendmanceDataManager.MessageReportHandler = msg =>
+            this.timer.AttendanceDataManager.MessageReportHandler = msg =>
             {
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
@@ -205,15 +205,15 @@ namespace MesServices.Desktop.ViewModel
     public class HandleAttendanceDataTimer : LeeTimerBase
     {
         #region property
-        public AttendanceDataManger AttendmanceDataManager { get; private set; }
+        public AttendanceDataManger AttendanceDataManager { get; private set; }
         TimerTarget ttgt = null;
         #endregion
 
         public HandleAttendanceDataTimer()
         {
             this.InitTimer(10000);
-            this.AttendmanceDataManager = new AttendanceDataManger();
-            this.ttgt = this.AttendmanceDataManager.LoadTimerSetConfigInfo();
+            this.AttendanceDataManager = new AttendanceDataManger();
+            this.ttgt = this.AttendanceDataManager.LoadTimerSetConfigInfo();
         }
 
         #region method
@@ -221,7 +221,10 @@ namespace MesServices.Desktop.ViewModel
         {
             isStart = false;
             DateTime slodCardDate = DateTime.Now.AddDays(-1);
-            this.AttendmanceDataManager.AutoProcessAttendanceDatas(slodCardDate);
+            //汇总数据
+            this.AttendanceDataManager.AutoProcessAttendanceDatas(slodCardDate);
+            //将异常考勤数据发送至各单位主管
+            this.AttendanceDataManager.NotifyToManager(slodCardDate);
             isStart = true;
         }
 

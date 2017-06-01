@@ -40,5 +40,11 @@ namespace Lm.Eic.AutoWorkProcess.Attendance.DbAccess
             }
             return null;
         }
+
+
+        public static List<string> GetUserEmails()
+        {
+            return DbHelper.LmProductMaster.LoadList("SELECT Distinct Email from  Config_MailInfo WHERE (ReceiveGrade <= 3)", "Email");
+        }
     }
 }
